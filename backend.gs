@@ -338,11 +338,11 @@ function setup() {
     }
   }
   
-  var projectHeaders = ['ID', 'Project Name', 'Client Name', 'Client Email', 'Type', 'Status', 'Total Cost', 'Paid Amount', 'Balance Amount', 'Current Stage', 'Notes', 'Last Update'];
+  var projectHeaders = ['ID', 'Project Name', 'Client Name', 'Client Email', 'Type', 'Status', 'Total Cost', 'Paid Amount', 'Balance Amount', 'Current Stage', 'Notes', 'Last Update', 'Design URL'];
   if (projectSheet.getLastRow() === 0) {
     projectSheet.appendRow(projectHeaders);
   } else {
-    projectSheet.getRange(1, 1, 1, 12).setValues([projectHeaders]);
+    projectSheet.getRange(1, 1, 1, 13).setValues([projectHeaders]);
   }
 
   // Setup Meetings Sheet
