@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Details | SOZHA</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+</head>
+
+<body class="client-view">
+    <div class="container" style="max-width: 600px; padding-top: 4rem;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div class="logo" style="font-size: 2rem;">SOZHA</div>
+            <p style="color: var(--accent-color); letter-spacing: 2px;">MAINTENANCE REPORT</p>
+        </div>
+
+        <div id="clientContent" class="card">
+            <div id="loading" style="text-align: center; padding: 2rem;">
+                <p>Fetching project data...</p>
+            </div>
+
+            <div id="projectData" style="display: none;">
+                <h1 id="cProjName" style="margin-bottom: 0.5rem;">Project Name</h1>
+                <div id="cStatusBadge" class="status-badge" style="display: inline-block; margin-bottom: 2rem;">Active
+                </div>
+
+                <div class="form-group">
+                    <label>Client</label>
+                    <p id="cClientName" style="font-weight: 600;">Client Name</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Last Updated</label>
+                    <p id="cLastUpdate">20 Jan 2026</p>
+                </div>
+
+                <div class="stat-row">
+                    <span class="stat-label">Current Stage</span>
+                    <span id="cStage" class="stat-value">Planning</span>
+                </div>
+
+                <div class="progress-container">
+                    <div id="cProgressBar" class="progress-bar"></div>
+                </div>
+
+                <div class="financial-grid">
+                    <div>
+                        <div class="stat-label">Total Amount</div>
+                        <div id="cTotalCost" class="stat-value">₹0</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="stat-label">Paid Amount</div>
+                        <div id="cPaidAmount" class="stat-value" style="color: #4CAF50;">₹0</div>
+                    </div>
+                </div>
+
+                <div class="stat-row"
+                    style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dotted var(--border-color);">
+                    <span class="stat-label">Balance Remaining</span>
+                    <span id="cBalance" class="stat-value" style="color: #ff4444; font-size: 1.1rem;">₹0</span>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label>Maintenance Notes</label>
+                    <p id="cNotes" style="color: var(--text-secondary);"></p>
+                </div>
+
+                <!-- Design Unlock Section -->
+                <div id="designSection"
+                    style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem; display: none;">
+                    <h3 style="margin-bottom: 1rem;">Project Design</h3>
+
+                    <div id="lockedDesign" style="position: relative; text-align: center;">
+                        <div id="designBlur"
+                            style="filter: blur(15px); pointer-events: none; height: 300px; background: #333; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <span class="iconify" data-icon="material-symbols:image-outline"
+                                style="font-size: 5rem; color: #444;"></span>
+                        </div>
+
+                        <div id="paymentOverlay"
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 1.5rem;">
+                            <span class="iconify" data-icon="material-symbols:lock-outline"
+                                style="font-size: 3rem; color: var(--accent-color); margin-bottom: 1rem;"></span>
+                            <h4 style="color: white; margin-bottom: 0.5rem;">Design Locked</h4>
+                            <p style="font-size: 0.9rem; margin-bottom: 1.5rem; color: #eee;">Clear the balance to
+                                unlock high-quality designs.</p>
+
+                            <div id="upiQR"
+                                style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 1rem;">
+                                <!-- UPI QR will be injected here -->
+                            </div>
+
+                            <a id="upiLink" href="#" class="btn"
+                                style="background: var(--accent-color); color: black; text-decoration: none; padding: 0.8rem 1.5rem; border-radius: 6px; font-weight: 700;">PAY
+                                VIA UPI</a>
+                        </div>
+                    </div>
+
+                    <div id="unlockedDesign" style="display: none;">
+                        <a id="designDownload" href="#" target="_blank" style="text-decoration: none;">
+                            <div id="designPreview"
+                                style="height: 300px; background-size: cover; background-position: center; border-radius: 12px; border: 2px solid var(--accent-color);">
+                            </div>
+                            <button class="secondary" style="width: 100%; margin-top: 1rem;">View Full Resolution
+                                Design</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="error" style="display: none; text-align: center; color: var(--error);">
+                <p>Project not found or invalid QR code.</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">© 2026 SOZHA ARCHITECTS</p>
+        </div>
+    </div>
+
+    <script>
+        // Simple client-side fetching logic
+        const params = new URLSearchParams(window.location.search);
+        const projectId = params.get('id');
+
+        async function fetchProject() {
+            if (!projectId) {
+                showError();
+                return;
+            }
+            try {
+                const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbxu15zySbViYiOV3F7Yf8dTkdCStKaeEV4y6hPSEiRXySyvip-B-AYyBgKEok1ENfeg/exec';
+                const scriptUrl = localStorage.getItem('sozha_script_url') || defaultScriptUrl;
+
+                const response = await fetch(`${scriptUrl}?action=getProject&id=${projectId}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    displayProject(data.data);
+                } else {
+                    showError();
+                }
+            } catch (e) {
+                showError();
+            }
+        }
+
+        function displayProject(proj) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('projectData').style.display = 'block';
+
+            document.getElementById('cProjName').textContent = proj.name;
+            document.getElementById('cClientName').textContent = proj.client;
+            document.getElementById('cStage').textContent = proj.currentStage || "Ongoing";
+            document.getElementById('cTotalCost').textContent = `₹${(proj.totalCost || 0).toLocaleString()}`;
+            document.getElementById('cPaidAmount').textContent = `₹${(proj.paidAmount || 0).toLocaleString()}`;
+
+            const balance = (proj.totalCost || 0) - (proj.paidAmount || 0);
+            document.getElementById('cBalance').textContent = `₹${balance.toLocaleString()}`;
+            document.getElementById('cBalance').style.color = balance > 0 ? '#ff4444' : '#4CAF50';
+
+            const progress = (proj.paidAmount / proj.totalCost * 100) || 0;
+            document.getElementById('cProgressBar').style.width = `${progress}%`;
+
+            document.getElementById('cStatusBadge').textContent = `${proj.type} - ${proj.status}`;
+            document.getElementById('cStatusBadge').className = `status-badge status-${proj.status.toLowerCase()}`;
+            document.getElementById('cNotes').textContent = proj.notes || "No recent updates.";
+            document.getElementById('cLastUpdate').textContent = proj.lastUpdate || "Recently";
+
+            // Handle Design Section
+            if (proj.designUrl) {
+                document.getElementById('designSection').style.display = 'block';
+                if (balance > 0) {
+                    document.getElementById('lockedDesign').style.display = 'block';
+                    document.getElementById('unlockedDesign').style.display = 'none';
+                    generateUPI(proj, balance);
+                } else {
+                    document.getElementById('lockedDesign').style.display = 'none';
+                    document.getElementById('unlockedDesign').style.display = 'block';
+                    document.getElementById('designPreview').style.backgroundImage = `url('${proj.designUrl}')`;
+                    document.getElementById('designDownload').href = proj.designUrl;
+                }
+            }
+        }
+
+        function generateUPI(proj, balance) {
+            const upiId = "sozhaarchitect@okaxis"; // You can make this dynamic later
+            const name = "SOZHA ARCHITECTS";
+            const amount = balance;
+            const note = `Payment for ${proj.name}`;
+
+            const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount}&tn=${encodeURIComponent(note)}&cu=INR`;
+
+            // Generate QR using externally provided API (since qrcode.js isn't here)
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiUrl)}`;
+            document.getElementById('upiQR').innerHTML = `<img src="${qrApiUrl}" alt="UPI QR">`;
+            document.getElementById('upiLink').href = upiUrl;
+        }
+
+        function showError(msg) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            if (msg) document.querySelector('#error p').textContent = msg;
+        }
+
+        if (projectId) fetchProject();
+    </script>
+</body>
+
+</html>

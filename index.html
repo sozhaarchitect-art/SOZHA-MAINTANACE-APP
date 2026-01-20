@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sozha Admin | Project Maintenance</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <!-- FullCalendar CDN -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">SOZHA</div>
+            <div class="title">MAINTENANCE SYSTEM</div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button class="secondary" onclick="updateScriptUrl()" title="Settings">
+                    <span class="iconify" data-icon="material-symbols:settings-outline"></span>
+                </button>
+                <button id="addProjectBtn">
+                    <span class="iconify" data-icon="material-symbols:add"></span>
+                    Add New Project
+                </button>
+            </div>
+        </header>
+
+        <section id="projectFormSection" class="card" style="display: none;">
+            <h2 id="formTitle">Project Details</h2>
+            <form id="projectForm">
+                <input type="hidden" id="editingId">
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" id="projName" required placeholder="e.g. Modern Villa - Block A">
+                </div>
+                <div class="form-group">
+                    <label>Client Name</label>
+                    <input type="text" id="clientName" required placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Client Email</label>
+                    <input type="email" id="clientEmail" required placeholder="e.g. john@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Project Type</label>
+                    <select id="projType">
+                        <option value="Design">Design</option>
+                        <option value="Construction">Construction</option>
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Total Cost (₹)</label>
+                        <input type="number" id="totalCost" required placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Paid Amount (₹)</label>
+                        <input type="number" id="paidAmount" required placeholder="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Current Stage</label>
+                    <input type="text" id="projStage" required placeholder="e.g. Foundation Work">
+                </div>
+                <div class="form-group">
+                    <label>Maintenance Status</label>
+                    <select id="status">
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="notes" rows="3" placeholder="Recent maintenance details..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Design Images Link (e.g. Google Drive/Image URL)</label>
+                    <input type="text" id="designUrl" placeholder="Link to project designs...">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit">Save Project</button>
+                    <button type="button" class="secondary" onclick="toggleForm()">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="analytics" class="card" style="margin-bottom: 2rem;">
+            <h2>Project Overview</h2>
+            <div style="max-width: 400px; margin: 0 auto;">
+                <canvas id="statusChart"></canvas>
+            </div>
+            <div id="statsSummary"
+                style="display: flex; justify-content: space-around; margin-top: 1.5rem; text-align: center;">
+                <!-- Stats will be injected here -->
+            </div>
+        </section>
+
+        <section id="dashboard">
+            <div class="tabs">
+                <div class="tab active" data-type="Design" onclick="switchTab('Design')">Design Projects</div>
+                <div class="tab" data-type="Construction" onclick="switchTab('Construction')">Construction Projects
+                </div>
+                <div class="tab" data-type="Scheduling" onclick="switchTab('Scheduling')">Scheduling</div>
+            </div>
+            <div class="project-grid" id="projectList">
+                <!-- Projects will be injected here -->
+            </div>
+            <div id="calendarView" class="card" style="display: none; margin-top: 1rem;">
+                <div id="calendar"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- QR Modal -->
+    <div id="qrModal" class="modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div class="card" style="background:#1a1a1a; max-width:400px; text-align:center;">
+            <h3 id="modalTitle">Project QR Code</h3>
+            <div id="qrcode" class="qr-container"></div>
+            <p style="margin-top:1rem; color:var(--text-secondary);">Scan this code to view project status</p>
+            <button class="secondary" style="margin-top:1rem;" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Meeting Modal -->
+    <div id="meetingModal" class="modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div class="card" style="background:#1a1a1a; width:100%; max-width:500px;">
+            <h3 id="meetingFormTitle">Schedule Meeting</h3>
+            <form id="meetingForm">
+                <input type="hidden" id="meetingId">
+                <div class="form-group">
+                    <label>Meeting Title</label>
+                    <input type="text" id="meetingTitle" required placeholder="e.g. Design Review - Villa A">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="datetime-local" id="meetingStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="datetime-local" id="meetingEnd" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Related Project</label>
+                    <select id="meetingProject">
+                        <option value="">No related project</option>
+                        <!-- Options will be injected -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="meetingDescription" rows="3" placeholder="Meeting details..."></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="submit">Save Meeting</button>
+                    <button type="button" id="deleteMeetingBtn" class="secondary"
+                        style="background: #ff4444; color: white; display: none;">Delete</button>
+                    <button type="button" class="secondary" onclick="closeMeetingModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
