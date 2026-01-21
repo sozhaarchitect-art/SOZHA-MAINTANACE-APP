@@ -197,9 +197,17 @@ function loadProjects() {
     }
 }
 
-async function fetchProjects() {
+async function fetchProjects(showFeedback = false) {
     const url = localStorage.getItem(scriptUrlKey);
     if (!url) return;
+
+    const syncBtn = document.getElementById('syncBtn');
+    const syncIcon = syncBtn ? syncBtn.querySelector('.iconify') : null;
+
+    if (showFeedback && syncIcon) {
+        syncIcon.classList.add('spin');
+    }
+
     try {
         const response = await fetch(`${url}?action=getProjects`);
         const result = await response.json();
@@ -208,10 +216,13 @@ async function fetchProjects() {
             localStorage.setItem('sozha_projects', JSON.stringify(projects));
             renderProjects();
             populateProjectDropdown();
-            showNotification('Projects synced from cloud');
+            if (showFeedback) showNotification('Projects synced from cloud');
         }
     } catch (e) {
         console.warn('Could not fetch projects from backend', e);
+        if (showFeedback) showNotification('Sync failed', true);
+    } finally {
+        if (syncIcon) syncIcon.classList.remove('spin');
     }
 }
 

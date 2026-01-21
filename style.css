@@ -428,3 +428,13 @@ textarea:focus {
         transform: translateY(0);
     }
 }
+
+.spin {
+    animation: spin 1.0s linear infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
