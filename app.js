@@ -4,17 +4,17 @@ let projects = [];
 let meetings = []; // New global for meetings
 let activeType = 'Design';
 const scriptUrlKey = 'sozha_script_url';
-const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbzNwtfBlDb85woU3jqQL_iVq2NPHgTaUK8LRo-oTQXQ2D5kWzn3nJyGL90sL7XDM_U4/exec';
+const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbx1TqmfymESGL0cEwPGC3GmjChEujl6rcCr4NNm13_YbbtUZ0Fd18eGYKOCGm2Z2Bid/exec';
 let statusChart = null;
 let calendar = null; // New global for FullCalendar instance
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadProjects();
-    fetchProjects(); // Sync projects from cloud
+    fetchProjects(true); // Sync projects from cloud on startup with feedback
     loadMeetings(); // Load meetings on startup
 
-    // Check for Script URL - Always update if the default in code changed
+    // Check for Script URL - Always update to the latest provided deployment if it changed
     const currentStoredUrl = localStorage.getItem(scriptUrlKey);
     if (!currentStoredUrl || currentStoredUrl !== defaultScriptUrl) {
         localStorage.setItem(scriptUrlKey, defaultScriptUrl);
@@ -94,7 +94,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (guideInstallBtn) {
         guideInstallBtn.addEventListener('click', triggerInstall);
     }
+
+    // Network Status Indicators
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
 });
+
+function updateNetworkStatus() {
+    const indicator = document.getElementById('networkStatus');
+    if (!indicator) return;
+    if (navigator.onLine) {
+        indicator.textContent = '● Online';
+        indicator.style.color = '#4CAF50';
+    } else {
+        indicator.textContent = '● Offline';
+        indicator.style.color = '#ff4444';
+    }
+}
 
 function openInstallGuide() {
     const modal = document.getElementById('installGuideModal');
@@ -209,18 +226,37 @@ async function fetchProjects(showFeedback = false) {
     }
 
     try {
+        console.log(`Fetching projects from: ${url}`);
         const response = await fetch(`${url}?action=getProjects`);
         const result = await response.json();
         if (result.status === 'success') {
-            projects = result.data;
+            // Sanitize data: trim spaces and ensure types match
+            projects = result.data.map(p => ({
+                ...p,
+                type: String(p.type || '').trim(),
+                status: String(p.status || '').trim(),
+                currentStage: String(p.currentStage || '').trim()
+            }));
+
             localStorage.setItem('sozha_projects', JSON.stringify(projects));
             renderProjects();
             populateProjectDropdown();
             if (showFeedback) showNotification('Projects synced from cloud');
+        } else {
+            throw new Error(result.message || 'Unknown backend error');
         }
     } catch (e) {
-        console.warn('Could not fetch projects from backend', e);
-        if (showFeedback) showNotification('Sync failed', true);
+        console.error('Fetch failed', e);
+        if (showFeedback) {
+            let errorMsg = `Sync Failed!\n\nTarget URL: ${url}\n\nError: ${e.message}\n\n`;
+            if (url.includes('AKfycbzNwtfBlDb85')) {
+                errorMsg += "⚠️ YOU ARE STILL USING THE SAMPLE URL! This link won't show your data.\n\nPlease paste YOUR Web App URL in settings (⚙️).";
+            } else {
+                errorMsg += "Please verify your Google Script URL and check if the sheet name is 'Projects'.";
+            }
+            alert(errorMsg);
+            showNotification('Sync failed', true);
+        }
     } finally {
         if (syncIcon) syncIcon.classList.remove('spin');
     }
@@ -241,7 +277,9 @@ function renderProjects() {
         calendarView.style.display = 'none';
     }
 
-    const filtered = projects.filter(p => p.type === activeType);
+    const filtered = projects.filter(p =>
+        String(p.type || '').trim().toLowerCase() === activeType.toLowerCase()
+    );
 
     container.innerHTML = filtered.map(p => `
         <div class="card">
@@ -612,9 +650,16 @@ function showNotification(msg, isError = false) {
 
 
 function updateScriptUrl() {
-    const newUrl = prompt('Enter your Google Script Web App URL:', localStorage.getItem(scriptUrlKey));
-    if (newUrl && newUrl.includes('script.google.com')) {
-        localStorage.setItem(scriptUrlKey, newUrl);
-        location.reload();
+    const currentUrl = localStorage.getItem(scriptUrlKey) || 'None';
+    let newUrl = prompt(`Current URL: ${currentUrl.substring(0, 40)}...\n\nEnter your Google Script Web App URL:`, currentUrl);
+
+    if (newUrl) {
+        newUrl = newUrl.trim();
+        if (newUrl.includes('script.google.com')) {
+            localStorage.setItem(scriptUrlKey, newUrl);
+            location.reload();
+        } else {
+            alert('Invalid URL! Please paste the "Web App URL" from Apps Script (Deployment).');
+        }
     }
 }
