@@ -58,6 +58,31 @@ function doGet(e) {
     }
     return ContentService.createTextOutput(JSON.stringify({status: 'success', data: meetings})).setMimeType(ContentService.MimeType.JSON);
   }
+  
+  if (action === 'getProjects') {
+    var sheet = spreadsheet.getSheetByName('Projects');
+    if (!sheet) return ContentService.createTextOutput(JSON.stringify({status: 'success', data: []})).setMimeType(ContentService.MimeType.JSON);
+    var data = sheet.getDataRange().getValues();
+    var projects = [];
+    for (var i = 1; i < data.length; i++) {
+      projects.push({
+        id: data[i][0],
+        name: data[i][1],
+        client: data[i][2],
+        clientEmail: data[i][3],
+        type: data[i][4],
+        status: data[i][5],
+        totalCost: data[i][6],
+        paidAmount: data[i][7],
+        balance: data[i][8],
+        currentStage: data[i][9],
+        notes: data[i][10],
+        lastUpdate: data[i][11],
+        designUrl: data[i][12]
+      });
+    }
+    return ContentService.createTextOutput(JSON.stringify({status: 'success', data: projects})).setMimeType(ContentService.MimeType.JSON);
+  }
 
   return ContentService.createTextOutput(JSON.stringify({status: 'error', message: 'Not found'}))
     .setMimeType(ContentService.MimeType.JSON);

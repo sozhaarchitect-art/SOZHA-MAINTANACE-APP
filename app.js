@@ -4,13 +4,14 @@ let projects = [];
 let meetings = []; // New global for meetings
 let activeType = 'Design';
 const scriptUrlKey = 'sozha_script_url';
-const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbzad9rVe6dxMMl7Db-XuQOYePVLkRClF5ac86g-ultd8XHJj52NUTAQxlTBahDoiAeD/exec';
+const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbzNwtfBlDb85woU3jqQL_iVq2NPHgTaUK8LRo-oTQXQ2D5kWzn3nJyGL90sL7XDM_U4/exec';
 let statusChart = null;
 let calendar = null; // New global for FullCalendar instance
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadProjects();
+    fetchProjects(); // Sync projects from cloud
     loadMeetings(); // Load meetings on startup
 
     // Check for Script URL - Always update if the default in code changed
@@ -193,6 +194,24 @@ function loadProjects() {
         projects = JSON.parse(stored);
         renderProjects();
         populateProjectDropdown();
+    }
+}
+
+async function fetchProjects() {
+    const url = localStorage.getItem(scriptUrlKey);
+    if (!url) return;
+    try {
+        const response = await fetch(`${url}?action=getProjects`);
+        const result = await response.json();
+        if (result.status === 'success') {
+            projects = result.data;
+            localStorage.setItem('sozha_projects', JSON.stringify(projects));
+            renderProjects();
+            populateProjectDropdown();
+            showNotification('Projects synced from cloud');
+        }
+    } catch (e) {
+        console.warn('Could not fetch projects from backend', e);
     }
 }
 
