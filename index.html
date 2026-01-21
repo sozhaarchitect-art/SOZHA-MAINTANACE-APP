@@ -36,6 +36,9 @@
                     <span class="iconify" data-icon="material-symbols:download"></span>
                     Install App
                 </button>
+                <button class="secondary" onclick="openInstallGuide()" title="Installation Guide">
+                    <span class="iconify" data-icon="material-symbols:help-outline"></span>
+                </button>
                 <button id="addProjectBtn">
                     <span class="iconify" data-icon="material-symbols:add"></span>
                     Add New Project
@@ -139,6 +142,78 @@
             <div id="qrcode" class="qr-container"></div>
             <p style="margin-top:1rem; color:var(--text-secondary);">Scan this code to view project status</p>
             <button class="secondary" style="margin-top:1rem;" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Installation Guide Modal -->
+    <div id="installGuideModal" class="modal" style="display:none;">
+        <div class="card install-guide-card">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+                <h3>Install Sozha Maintenance App</h3>
+                <button class="secondary" style="padding: 0.5rem; min-width: auto;" onclick="closeInstallGuide()">
+                    <span class="iconify" data-icon="material-symbols:close"></span>
+                </button>
+            </div>
+
+            <div class="install-tabs">
+                <button class="install-tab active" data-platform="desktop"
+                    onclick="switchInstallTab('desktop')">Desktop</button>
+                <button class="install-tab" data-platform="android"
+                    onclick="switchInstallTab('android')">Android</button>
+                <button class="install-tab" data-platform="ios" onclick="switchInstallTab('ios')">iOS
+                    (iPhone/iPad)</button>
+            </div>
+
+            <div id="desktop-guide" class="guide-content active">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <p>Open this site in <strong>Chrome</strong> or <strong>Edge</strong> browser.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <p>Click the <strong>Install</strong> icon in the address bar or looking for <strong>"Install
+                            App"</strong> in the menu.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <p>Click <strong>"Install"</strong> when prompted.</p>
+                </div>
+            </div>
+
+            <div id="android-guide" class="guide-content">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <p>Open this site in <strong>Chrome</strong> on your Android device.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <p>Tap the <strong>three dots</strong> (menu) in the top right corner.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <p>Select <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong>.</p>
+                </div>
+            </div>
+
+            <div id="ios-guide" class="guide-content">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <p>Open this site in <strong>Safari</strong> on your iPhone or iPad.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <p>Tap the <strong>Share</strong> button (box with an upward arrow) at the bottom.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <p>Scroll down and tap <strong>"Add to Home Screen"</strong>.</p>
+                </div>
+            </div>
+
+            <button id="guideInstallBtn"
+                style="width: 100%; justify-content: center; margin-top: 1.5rem; display: none;">
+                Install Now
+            </button>
         </div>
     </div>
 

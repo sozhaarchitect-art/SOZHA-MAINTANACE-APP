@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // PWA Logic: Installation Prompt
     let deferredPrompt;
     const installBtn = document.getElementById('installApp');
+    const guideInstallBtn = document.getElementById('guideInstallBtn');
 
     window.addEventListener('beforeinstallprompt', (e) => {
         // Prevent Chrome 67 and earlier from automatically showing the prompt
@@ -68,24 +69,63 @@ document.addEventListener('DOMContentLoaded', () => {
         deferredPrompt = e;
         // Update UI notify the user they can add to home screen
         if (installBtn) installBtn.style.display = 'inline-flex';
+        if (guideInstallBtn) guideInstallBtn.style.display = 'inline-flex';
     });
 
+    const triggerInstall = async () => {
+        if (deferredPrompt) {
+            // Show the prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            // We've used the prompt, and can't use it again, throw it away
+            deferredPrompt = null;
+            // Hide the install buttons
+            if (installBtn) installBtn.style.display = 'none';
+            if (guideInstallBtn) guideInstallBtn.style.display = 'none';
+        }
+    };
+
     if (installBtn) {
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                // Show the prompt
-                deferredPrompt.prompt();
-                // Wait for the user to respond to the prompt
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response to the install prompt: ${outcome}`);
-                // We've used the prompt, and can't use it again, throw it away
-                deferredPrompt = null;
-                // Hide the install button
-                installBtn.style.display = 'none';
-            }
-        });
+        installBtn.addEventListener('click', triggerInstall);
+    }
+    if (guideInstallBtn) {
+        guideInstallBtn.addEventListener('click', triggerInstall);
     }
 });
+
+function openInstallGuide() {
+    const modal = document.getElementById('installGuideModal');
+    modal.style.display = 'flex';
+
+    // Auto-detect platform
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1) {
+        switchInstallTab('ios');
+    } else if (ua.indexOf('android') > -1) {
+        switchInstallTab('android');
+    } else {
+        switchInstallTab('desktop');
+    }
+}
+
+function closeInstallGuide() {
+    document.getElementById('installGuideModal').style.display = 'none';
+}
+
+function switchInstallTab(platform) {
+    // Update tabs
+    document.querySelectorAll('.install-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.platform === platform);
+    });
+
+    // Update content
+    document.querySelectorAll('.guide-content').forEach(c => {
+        c.classList.remove('active');
+    });
+    document.getElementById(`${platform}-guide`).classList.add('active');
+}
 
 function toggleForm() {
     if (activeType === 'Scheduling') {

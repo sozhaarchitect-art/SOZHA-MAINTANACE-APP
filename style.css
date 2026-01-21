@@ -347,3 +347,84 @@ textarea:focus {
     width: 90%;
     border-color: var(--accent-color);
 }
+
+/* Installation Guide Specifics */
+.install-guide-card {
+    padding: 1.5rem !important;
+}
+
+.install-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: #1a1a1a;
+    padding: 0.3rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.install-tab {
+    flex: 1;
+    padding: 0.6rem !important;
+    font-size: 0.85rem !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-secondary) !important;
+    white-space: nowrap;
+}
+
+.install-tab.active {
+    background: var(--card-bg) !important;
+    color: var(--accent-color) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.guide-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.guide-content.active {
+    display: block;
+}
+
+.step {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1.2rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.step-num {
+    width: 28px;
+    height: 28px;
+    background: var(--accent-color);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.step p {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
