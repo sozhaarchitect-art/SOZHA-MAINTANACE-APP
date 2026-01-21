@@ -14,9 +14,16 @@
     <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
     <!-- FullCalendar CDN -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+
+    <!-- PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#c5a059">
 </head>
 
 <body>
+    <div id="splash-screen">
+        <img src="logo.png" alt="Sozha Architecture Logo" id="splash-logo">
+    </div>
     <div class="container">
         <header>
             <div class="logo">SOZHA</div>
@@ -24,6 +31,10 @@
             <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <button class="secondary" onclick="updateScriptUrl()" title="Settings">
                     <span class="iconify" data-icon="material-symbols:settings-outline"></span>
+                </button>
+                <button id="installApp" style="display: none;" class="secondary">
+                    <span class="iconify" data-icon="material-symbols:download"></span>
+                    Install App
                 </button>
                 <button id="addProjectBtn">
                     <span class="iconify" data-icon="material-symbols:add"></span>

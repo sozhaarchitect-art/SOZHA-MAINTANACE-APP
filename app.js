@@ -38,6 +38,53 @@ document.addEventListener('DOMContentLoaded', () => {
     if (deleteMeetingBtn) {
         deleteMeetingBtn.onclick = handleDeleteMeeting;
     }
+
+    // Splash Screen Logic
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+        setTimeout(() => {
+            splash.classList.add('fade-out');
+            setTimeout(() => {
+                splash.remove();
+            }, 800); // Match transition duration
+        }, 2500); // Show for 2.5s
+    }
+
+    // PWA Logic: Register Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(() => console.log('Service Worker Registered'))
+            .catch(err => console.warn('Service Worker Failed', err));
+    }
+
+    // PWA Logic: Installation Prompt
+    let deferredPrompt;
+    const installBtn = document.getElementById('installApp');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI notify the user they can add to home screen
+        if (installBtn) installBtn.style.display = 'inline-flex';
+    });
+
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Show the prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                // We've used the prompt, and can't use it again, throw it away
+                deferredPrompt = null;
+                // Hide the install button
+                installBtn.style.display = 'none';
+            }
+        });
+    }
 });
 
 function toggleForm() {
