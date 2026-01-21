@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sozha-maint-v5';
+const CACHE_NAME = 'sozha-maint-v6';
 const ASSETS = [
     './',
     './index.html',

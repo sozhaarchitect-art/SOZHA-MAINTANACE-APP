@@ -327,6 +327,23 @@ textarea:focus {
     padding: 2px 5px;
 }
 
+/* FullCalendar Responsive Header Fixes */
+@media (max-width: 768px) {
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1.1rem !important;
+    }
+
+    .fc .fc-button {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.85rem !important;
+    }
+}
+
 /* Modals */
 .modal {
     display: none;
