@@ -5,7 +5,7 @@ let meetings = []; // New global for meetings
 let activeType = 'Design';
 let searchQuery = '';
 const scriptUrlKey = 'sozha_script_url';
-const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbx1TqmfymESGL0cEwPGC3GmjChEujl6rcCr4NNm13_YbbtUZ0Fd18eGYKOCGm2Z2Bid/exec';
+const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbwlpvGK9JYH-iKB-fM0LTKRiB1sGuYKm3z82Zu2fhFMbh9oyWPjvK14gstfAhngCRnF/exec';
 let statusChart = null;
 let calendar = null; // New global for FullCalendar instance
 
