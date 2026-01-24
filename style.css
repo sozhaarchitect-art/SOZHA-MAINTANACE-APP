@@ -205,20 +205,69 @@ textarea:focus {
 }
 
 .status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 99px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    display: inline-flex;
+    align-items: center;
+    height: 48px;
+    /* Match icon buttons */
 }
 
 .status-active {
-    background: rgba(76, 175, 80, 0.2);
+    background: rgba(76, 175, 80, 0.15);
     color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .status-pending {
-    background: rgba(255, 193, 7, 0.2);
+    background: rgba(255, 193, 7, 0.15);
     color: #FFC107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.status-under-review {
+    background: rgba(33, 150, 243, 0.15);
+    color: #2196F3;
+    border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.status-completed {
+    background: rgba(158, 158, 158, 0.15);
+    color: #9E9E9E;
+    border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+.card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.icon-btn {
+    width: 48px;
+    height: 48px;
+    padding: 0 !important;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.icon-btn .iconify {
+    font-size: 1.4rem;
+    pointer-events: none;
+    /* Ensure clicks pass through to the button */
 }
 
 /* Responsive */
@@ -268,6 +317,26 @@ textarea:focus {
     height: 2px;
     background: var(--accent-color);
     box-shadow: 0 0 10px var(--accent-color);
+}
+
+/* Search */
+.search-container {
+    margin-bottom: 2rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-container .iconify {
+    position: absolute;
+    left: 1rem;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+}
+
+.search-container input {
+    padding-left: 3rem;
+    background: var(--card-bg);
 }
 
 /* FullCalendar Premium Dark Theme */

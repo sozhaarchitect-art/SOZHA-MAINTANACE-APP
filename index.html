@@ -131,6 +131,13 @@
                 </div>
                 <div class="tab" data-type="Scheduling" onclick="switchTab('Scheduling')">Scheduling</div>
             </div>
+
+            <div class="search-container" id="searchContainer">
+                <span class="iconify" data-icon="material-symbols:search"></span>
+                <input type="text" id="projectSearch" placeholder="Search projects by name or client..."
+                    oninput="handleSearch(this.value)">
+            </div>
+
             <div class="project-grid" id="projectList">
                 <!-- Projects will be injected here -->
             </div>

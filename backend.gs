@@ -177,6 +177,19 @@ function doPost(e) {
       }
     }
   }
+
+  if (action === 'sendProjectLink') {
+    var project = data.project || data;
+    var baseUrl = data.baseUrl;
+    var message = data.message || '';
+    if (project && baseUrl) {
+      logToSheet('Manual request: Sending project link to ' + project.clientEmail);
+      sendProjectLink(project, baseUrl, message);
+      return ContentService.createTextOutput(JSON.stringify({status: 'success', message: 'Email sent'})).setMimeType(ContentService.MimeType.JSON);
+    } else {
+      return ContentService.createTextOutput(JSON.stringify({status: 'error', message: 'Missing project or baseUrl'})).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
 }
 
 
@@ -280,7 +293,7 @@ function sendPaymentReminder(project) {
   }
 }
 
-function sendProjectLink(project, baseUrl) {
+function sendProjectLink(project, baseUrl, customMessage) {
   if (!project.clientEmail) {
     logToSheet('ERROR: No email for project ' + project.name);
     return;
@@ -289,7 +302,7 @@ function sendProjectLink(project, baseUrl) {
   var clientUrl = baseUrl.replace('index.html', '').replace('dashboard.html', '') + 'client.html?id=' + project.id;
   var qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(clientUrl);
   
-  var subject = 'We have started your project: ' + project.name + ' | SOZHA';
+  var subject = 'Project Status Update: ' + project.name + ' | SOZHA';
   var htmlBody = `
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; border: 1px solid #c5a059;">
       <div style="background-color: #0a0a0a; padding: 20px; text-align: center;">
@@ -297,23 +310,37 @@ function sendProjectLink(project, baseUrl) {
         <p style="color: #888; margin: 5px 0 0 0; font-size: 12px; text-transform: uppercase;">Architecture & Maintenance</p>
       </div>
       <div style="padding: 30px 20px;">
-        <h2 style="color: #0a0a0a; border-bottom: 2px solid #c5a059; padding-bottom: 10px;">Project Started</h2>
+        <h2 style="color: #0a0a0a; border-bottom: 2px solid #c5a059; padding-bottom: 10px;">Project Status Update</h2>
         <p>Dear <strong>${project.client}</strong>,</p>
-        <p>We are delighted to inform you that <strong>we have started your project</strong>: "<strong>${project.name}</strong>".</p>
+        <p>We are writing to provide you with an update on your project: "<strong>${project.name}</strong>".</p>
         
-        <p>You can track the real-time status and financial details through your personal dashboard.</p>
+        <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #c5a059; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>Current Status:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #c5a059;">${project.status}</span></p>
+          <p style="margin: 5px 0;"><strong>Active Stage:</strong> ${project.currentStage || 'Initial Phase'}</p>
+        </div>
+
+        ${customMessage ? `<div style="margin: 20px 0; padding: 15px; background-color: #fff9e6; border: 1px dashed #c5a059; color: #555;">
+          <strong>Message from SOZHA:</strong><br>
+          ${customMessage}
+        </div>` : ''}
+
+        <p>You can track real-time progress, view designs, and check financial details through your personal dashboard.</p>
 
         <div style="text-align: center; margin: 30px 0;">
           <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Scan the QR code below for instant access:</p>
           <img src="${qrImageUrl}" alt="Project QR Code" style="border: 2px solid #c5a059; padding: 5px; background: white;">
           <p style="margin-top: 15px;">
-            <a href="${clientUrl}" style="background-color: #c5a059; color: #000; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">View Project Online</a>
+            <a href="${clientUrl}" style="background-color: #c5a059; color: #000; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">View Project Dashboard</a>
           </p>
         </div>
 
         <p>Thank you for choosing SOZHA.</p>
         <p style="margin-top: 30px;">Best regards,</p>
-        <p><strong>The SOZHA Team</strong></p>
+        <p><strong>The SOZHA Team</strong><br>
+        <small style="color: #888;">SOZHAARCHITECT@GMAIL.COM</small></p>
+      </div>
+      <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 11px; color: #999;">
+        Copyright &copy; ${new Date().getFullYear()} SOZHA. All rights reserved.
       </div>
     </div>
   `;

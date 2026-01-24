@@ -3,6 +3,7 @@
 let projects = [];
 let meetings = []; // New global for meetings
 let activeType = 'Design';
+let searchQuery = '';
 const scriptUrlKey = 'sozha_script_url';
 const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbx1TqmfymESGL0cEwPGC3GmjChEujl6rcCr4NNm13_YbbtUZ0Fd18eGYKOCGm2Z2Bid/exec';
 let statusChart = null;
@@ -270,16 +271,30 @@ function renderProjects() {
     if (activeType === 'Scheduling') {
         container.style.display = 'none';
         calendarView.style.display = 'block';
+        if (document.getElementById('searchContainer')) {
+            document.getElementById('searchContainer').style.display = 'none';
+        }
         initCalendar();
         return;
     } else {
         container.style.display = 'grid';
         calendarView.style.display = 'none';
+        if (document.getElementById('searchContainer')) {
+            document.getElementById('searchContainer').style.display = 'flex';
+        }
     }
 
-    const filtered = projects.filter(p =>
+    let filtered = projects.filter(p =>
         String(p.type || '').trim().toLowerCase() === activeType.toLowerCase()
     );
+
+    if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter(p =>
+            p.name.toLowerCase().includes(query) ||
+            p.client.toLowerCase().includes(query)
+        );
+    }
 
     container.innerHTML = filtered.map(p => `
         <div class="card">
@@ -302,16 +317,19 @@ function renderProjects() {
                     ₹${(p.totalCost - p.paidAmount).toLocaleString()}
                 </span>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                <span class="status-badge status-${p.status.toLowerCase()}">${p.status}</span>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="secondary" onclick="editProject('${p.id}')">
+            <div class="card-actions">
+                <span class="status-badge status-${p.status ? p.status.toLowerCase().replace(/\s+/g, '-') : 'unknown'}">${p.status || 'Unknown'}</span>
+                <div class="action-buttons">
+                    <button class="secondary icon-btn" title="Edit Project" onclick="console.log('Edit clicked', '${p.id}'); editProject('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:edit-outline"></span>
                     </button>
-                    <button class="secondary" onclick="showQR('${p.id}', '${p.name}')">
+                    <button class="secondary icon-btn" title="Show QR Code" onclick="showQR('${p.id}', '${p.name.replace(/'/g, "\\'")}')">
                         <span class="iconify" data-icon="material-symbols:qr-code"></span>
                     </button>
-                    <button class="secondary" onclick="deleteProject('${p.id}')">
+                    <button class="secondary icon-btn" title="Send Status Update" onclick="console.log('Mail clicked', '${p.id}'); sendProjectEmail('${p.id}')">
+                        <span class="iconify" data-icon="material-symbols:mail-outline"></span>
+                    </button>
+                    <button class="secondary icon-btn" title="Delete Project" onclick="deleteProject('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:delete-outline"></span>
                     </button>
                 </div>
@@ -340,6 +358,16 @@ function switchTab(type) {
         t.classList.toggle('active', t.dataset.type === type);
     });
 
+    // Reset search
+    searchQuery = '';
+    const searchInput = document.getElementById('projectSearch');
+    if (searchInput) searchInput.value = '';
+
+    renderProjects();
+}
+
+function handleSearch(query) {
+    searchQuery = query;
     renderProjects();
 }
 
@@ -450,7 +478,6 @@ function showQR(id, name) {
 function closeModal() {
     document.getElementById('qrModal').style.display = 'none';
 }
-
 async function deleteProject(id) {
     if (confirm('Delete this project?')) {
         await syncWithGoogleSheets(id, 'deleteProject');
@@ -460,6 +487,40 @@ async function deleteProject(id) {
         });
         localStorage.setItem('sozha_projects', JSON.stringify(projects));
         renderProjects();
+    }
+}
+
+async function sendProjectEmail(id) {
+    const project = projects.find(p => p.id === id);
+    if (!project) return;
+
+    if (!project.clientEmail) {
+        alert('No email address found for this client!');
+        return;
+    }
+
+    const message = prompt(`Enter a custom message to include in the status update email (optional):\n\nClient: ${project.client}\nProject: ${project.name}`, "Site clearance is in progress.");
+
+    if (message === null) return; // User cancelled
+
+    const baseUrl = window.location.href.split('?')[0];
+
+    try {
+        showNotification('Sending status update...');
+        const url = localStorage.getItem(scriptUrlKey);
+        await fetch(url, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'sendProjectLink',
+                data: { project, baseUrl, message: message }
+            })
+        });
+        showNotification('Update email sent successfully!');
+    } catch (e) {
+        console.error('Email send failed', e);
+        showNotification('Failed to send update. Check connection.', true);
     }
 }
 
