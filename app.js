@@ -5,7 +5,7 @@ let meetings = []; // New global for meetings
 let activeType = 'Design';
 let searchQuery = '';
 const scriptUrlKey = 'sozha_script_url';
-const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbwlpvGK9JYH-iKB-fM0LTKRiB1sGuYKm3z82Zu2fhFMbh9oyWPjvK14gstfAhngCRnF/exec';
+const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbyB5y0AluRhDRf0iynsiBoPBeaqqVvfVeabw-Y0kw4c1auj8haC8pPL5DwjieUkUa06/exec';
 let statusChart = null;
 let calendar = null; // New global for FullCalendar instance
 
@@ -499,7 +499,7 @@ async function sendProjectEmail(id) {
         return;
     }
 
-    const message = prompt(`Enter a custom message to include in the status update email (optional):\n\nClient: ${project.client}\nProject: ${project.name}`, "Site clearance is in progress.");
+    const message = prompt(`Enter a custom message to include in the status update email (optional):\n\nClient: ${project.client}\nProject: ${project.name}`, `Current Status: ${project.status} | Stage: ${project.currentStage}`);
 
     if (message === null) return; // User cancelled
 
@@ -508,19 +508,24 @@ async function sendProjectEmail(id) {
     try {
         showNotification('Sending status update...');
         const url = localStorage.getItem(scriptUrlKey);
+
+        console.log('Attempting to send email via:', url);
+
+        // Reverting to the most compatible GAS fetch method: no-cors + text/plain
         await fetch(url, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
                 action: 'sendProjectLink',
                 data: { project, baseUrl, message: message }
             })
         });
-        showNotification('Update email sent successfully!');
+
+        showNotification('Update request sent! Check your Sent folder soon.');
     } catch (e) {
-        console.error('Email send failed', e);
-        showNotification('Failed to send update. Check connection.', true);
+        console.error('Email request failed:', e);
+        showNotification('Request failed. Check your internet or script URL.', true);
     }
 }
 
@@ -632,6 +637,7 @@ function loadMeetings() {
     const stored = localStorage.getItem('sozha_meetings');
     if (stored) {
         meetings = JSON.parse(stored);
+        checkMeetingsToday();
     }
     // Attempt to fetch fresh from GS
     fetchMeetings();
@@ -646,6 +652,7 @@ async function fetchMeetings() {
         if (result.status === 'success') {
             meetings = result.data;
             localStorage.setItem('sozha_meetings', JSON.stringify(meetings));
+            checkMeetingsToday();
             if (calendar) {
                 calendar.removeAllEvents();
                 calendar.addEventSource(meetings);
@@ -653,6 +660,39 @@ async function fetchMeetings() {
         }
     } catch (e) {
         console.warn('Could not fetch meetings from backend', e);
+    }
+}
+
+function checkMeetingsToday() {
+    if (sessionStorage.getItem('sozha_meeting_alert_dismissed')) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayMeetings = meetings.filter(m => {
+        const meetingDate = new Date(m.start);
+        meetingDate.setHours(0, 0, 0, 0);
+        return meetingDate.getTime() === today.getTime();
+    });
+
+    const alertEl = document.getElementById('meetingAlert');
+    const infoEl = document.getElementById('meetingAlertInfo');
+
+    if (todayMeetings.length > 0 && alertEl && infoEl) {
+        const nextMeeting = todayMeetings[0];
+        const time = new Date(nextMeeting.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        infoEl.textContent = `${nextMeeting.title} at ${time}${todayMeetings.length > 1 ? ` (+${todayMeetings.length - 1} more)` : ''}`;
+        alertEl.style.display = 'flex';
+    } else if (alertEl) {
+        alertEl.style.display = 'none';
+    }
+}
+
+function dismissMeetingAlert() {
+    const alertEl = document.getElementById('meetingAlert');
+    if (alertEl) {
+        alertEl.style.display = 'none';
+        sessionStorage.setItem('sozha_meeting_alert_dismissed', 'true');
     }
 }
 

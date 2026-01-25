@@ -25,6 +25,17 @@
         <img src="logo.png" alt="Sozha Architecture Logo" id="splash-logo">
     </div>
     <div class="container">
+        <div id="meetingAlert" class="meeting-alert" style="display: none;">
+            <div class="alert-content">
+                <span class="iconify" data-icon="material-symbols:event-upcoming-outline"></span>
+                <div class="alert-text">
+                    <strong>Today's Meeting:</strong> <span id="meetingAlertInfo">Loading...</span>
+                </div>
+            </div>
+            <button class="alert-close" onclick="dismissMeetingAlert()">
+                <span class="iconify" data-icon="material-symbols:close"></span>
+            </button>
+        </div>
         <header>
             <div class="logo">SOZHA</div>
             <div class="title">MAINTENANCE SYSTEM <span id="networkStatus"

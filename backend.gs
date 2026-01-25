@@ -9,7 +9,16 @@
  * 4. Click DEPLOY > NEW DEPLOYMENT > WEB APP > ANYONE > DEPLOY.
  */
 
+function testEmail() {
+  var userEmail = "sozhaarchitect@gmail.com";
+  MailApp.sendEmail(userEmail, "SOZHA Test Email", "If you received this, Sozha has permission to send emails from your account.");
+  Logger.log("Test email sent to: " + userEmail);
+}
+
 function doGet(e) {
+  if (!e || !e.parameter) {
+    return ContentService.createTextOutput("SOZHA Backend is Online. (Note: This function cannot be run manually from the editor)").setMimeType(ContentService.MimeType.TEXT);
+  }
   var action = e.parameter.action;
   var id = e.parameter.id;
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -89,12 +98,15 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  if (!e || !e.postData) {
+    return ContentService.createTextOutput(JSON.stringify({status: 'error', message: 'No data received. This function cannot be run manually.'})).setMimeType(ContentService.MimeType.JSON);
+  }
   logToSheet('--- NEW POST REQUEST RECEIVED ---');
   
   var body;
   try {
     body = JSON.parse(e.postData.contents);
-    logToSheet('Action: ' + body.action);
+    logToSheet('Action Triggered: ' + body.action);
   } catch (err) {
     logToSheet('CRITICAL ERROR: Failed to parse request body. Error: ' + err.toString());
     logToSheet('Raw Context: ' + JSON.stringify(e.postData.contents));
@@ -282,7 +294,7 @@ function sendPaymentReminder(project) {
   `;
 
   try {
-    GmailApp.sendEmail(project.clientEmail, subject, '', {
+    MailApp.sendEmail(project.clientEmail, subject, '', {
       htmlBody: htmlBody,
       name: 'SOZHA ARCHITECT',
       replyTo: 'sozhaarchitect@gmail.com'
@@ -346,14 +358,16 @@ function sendProjectLink(project, baseUrl, customMessage) {
   `;
 
   try {
-    GmailApp.sendEmail(project.clientEmail, subject, '', {
+    MailApp.sendEmail(project.clientEmail, subject, '', {
       htmlBody: htmlBody,
       name: 'SOZHA ARCHITECT',
       replyTo: 'sozhaarchitect@gmail.com'
     });
-    logToSheet('SUCCESS: Started email sent to ' + project.clientEmail);
+    logToSheet('SUCCESS: Client update email sent to ' + project.clientEmail);
+    Logger.log('SUCCESS: Client update email sent to ' + project.clientEmail);
   } catch (e) {
-    logToSheet('CRITICAL ERROR: Failed to send started email: ' + e.toString());
+    logToSheet('CRITICAL ERROR: Failed to send project update email to ' + project.clientEmail + '. Error: ' + e.toString());
+    Logger.log('CRITICAL ERROR: Failed to send project update email to ' + project.clientEmail + '. Error: ' + e.toString());
   }
 }
 
