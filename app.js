@@ -1,4 +1,5 @@
 // Core Logic for Sozha Maintenance App
+const VERSION = '1.0.7'; // Matches sw.js v7
 
 let projects = [];
 let meetings = []; // New global for meetings

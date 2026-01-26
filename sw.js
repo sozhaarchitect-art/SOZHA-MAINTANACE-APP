@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sozha-maint-v6';
+const CACHE_NAME = 'sozha-maint-v7';
 const ASSETS = [
     './',
     './index.html',
@@ -34,9 +34,21 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // "Network First, falling back to cache" strategy for core assets
+    // This ensures updates from GitHub are visible immediately if online
     event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
+        fetch(event.request).then((response) => {
+            // Update the cache with the new version
+            if (response && response.status === 200) {
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseClone);
+                });
+            }
+            return response;
+        }).catch(() => {
+            // If network fails, serve from cache
+            return caches.match(event.request);
         })
     );
 });
