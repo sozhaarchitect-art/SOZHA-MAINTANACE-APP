@@ -435,18 +435,26 @@ function updateAnalytics() {
 
     const summary = document.getElementById('statsSummary');
     if (summary) {
+        const designCount = projects.filter(p => String(p.type || '').trim().toLowerCase() === 'design').length;
+        const constructionCount = projects.filter(p => String(p.type || '').trim().toLowerCase() === 'construction').length;
+        const schedulingCount = meetings.length;
+
         summary.innerHTML = `
             <div>
                 <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">${projects.length}</div>
                 <div style="font-size: 0.8rem; color: var(--text-secondary);">Total Projects</div>
             </div>
             <div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #4CAF50;">${stats.Active}</div>
-                <div style="font-size: 0.8rem; color: var(--text-secondary);">Active</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #4CAF50;">${designCount}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Design</div>
             </div>
             <div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #FFC107;">${stats.Pending}</div>
-                <div style="font-size: 0.8rem; color: var(--text-secondary);">Pending</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #FFC107;">${constructionCount}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Construction</div>
+            </div>
+            <div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #2196F3;">${schedulingCount}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Scheduling</div>
             </div>
         `;
     }
@@ -500,14 +508,14 @@ async function sendProjectEmail(id) {
         return;
     }
 
-    const message = prompt(`Enter a custom message to include in the status update email (optional):\n\nClient: ${project.client}\nProject: ${project.name}`, `Current Status: ${project.status} | Stage: ${project.currentStage}`);
+    const message = prompt(`Send project update to client?\n\nClient: ${project.client}\nEmail: ${project.clientEmail}\nProject: ${project.name}\n\nEnter a custom message (optional):`, `Current Status: ${project.status} | Stage: ${project.currentStage}`);
 
     if (message === null) return; // User cancelled
 
     const baseUrl = window.location.href.split('?')[0];
 
     try {
-        showNotification('Sending status update...');
+        showNotification(`Sending status update to ${project.clientEmail}...`);
         const url = localStorage.getItem(scriptUrlKey);
 
         console.log('Attempting to send email via:', url);
