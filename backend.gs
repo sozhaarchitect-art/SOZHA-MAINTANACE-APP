@@ -281,6 +281,15 @@ function sendPaymentReminder(project) {
           <p style="margin: 5px 0;"><strong>Total Paid:</strong> ₹${Number(project.paidAmount).toLocaleString()}</p>
           <p style="margin: 5px 0; color: ${balance > 0 ? '#d32f2f' : '#388e3c'}; font-size: 18px;"><strong>Balance Due:</strong> ₹${balance.toLocaleString()}</p>
         </div>
+
+        <div style="background-color: #1a1a1a; padding: 30px; border-radius: 12px; text-align: center; margin: 30px 0; border: 1px solid #c5a059;">
+          <h3 style="color: #ffffff; margin-top: 0; font-size: 18px; letter-spacing: 1px;">Client Access QR</h3>
+          <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; margin-bottom: 15px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://sozha.vercel.app/client.html?id=' + project.id)}" alt="Client Access QR" style="display: block; width: 150px; height: 150px;">
+          </div>
+          <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Scan to view project status & details</p>
+          <a href="https://sozha.vercel.app/client.html?id=${project.id}" style="background-color: #c5a059; color: #000; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;">View Project Dashboard</a>
+        </div>
         
         <p>Please ensure all payments are up to date to avoid any delays in the project timeline.</p>
         <p style="margin-top: 30px;">Best regards,</p>
@@ -338,12 +347,13 @@ function sendProjectLink(project, baseUrl, customMessage) {
 
         <p>You can track real-time progress, view designs, and check financial details through your personal dashboard.</p>
 
-        <div style="text-align: center; margin: 30px 0;">
-          <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Scan the QR code below for instant access:</p>
-          <img src="${qrImageUrl}" alt="Project QR Code" style="border: 2px solid #c5a059; padding: 5px; background: white;">
-          <p style="margin-top: 15px;">
-            <a href="${clientUrl}" style="background-color: #c5a059; color: #000; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">View Project Dashboard</a>
-          </p>
+        <div style="background-color: #1a1a1a; padding: 30px; border-radius: 12px; text-align: center; margin: 30px 0; border: 1px solid #c5a059;">
+          <h3 style="color: #ffffff; margin-top: 0; font-size: 18px; letter-spacing: 1px;">Client Access QR</h3>
+          <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; margin-bottom: 15px;">
+            <img src="${qrImageUrl}" alt="Client Access QR" style="display: block; width: 150px; height: 150px;">
+          </div>
+          <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Scan to view project status</p>
+          <a href="${clientUrl}" style="background-color: #c5a059; color: #000; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;">View Project Dashboard</a>
         </div>
 
         <p>Thank you for choosing SOZHA.</p>

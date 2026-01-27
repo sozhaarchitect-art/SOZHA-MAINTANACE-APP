@@ -6,7 +6,7 @@ let meetings = []; // New global for meetings
 let activeType = 'Design';
 let searchQuery = '';
 const scriptUrlKey = 'sozha_script_url';
-const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbyB5y0AluRhDRf0iynsiBoPBeaqqVvfVeabw-Y0kw4c1auj8haC8pPL5DwjieUkUa06/exec';
+const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbzXdH1ujPPOQ0ZWa8lPRSxcTm7BGQs8HW3wE67T2X_fYL5oQTuhstNrfA6xhOkoaGk/exec';
 let statusChart = null;
 let calendar = null; // New global for FullCalendar instance
 
@@ -235,6 +235,7 @@ async function fetchProjects(showFeedback = false) {
             // Sanitize data: trim spaces and ensure types match
             projects = result.data.map(p => ({
                 ...p,
+                id: String(p.id),
                 type: String(p.type || '').trim(),
                 status: String(p.status || '').trim(),
                 currentStage: String(p.currentStage || '').trim()
@@ -324,7 +325,7 @@ function renderProjects() {
                     <button class="secondary icon-btn" title="Edit Project" onclick="console.log('Edit clicked', '${p.id}'); editProject('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:edit-outline"></span>
                     </button>
-                    <button class="secondary icon-btn" title="Show QR Code" onclick="showQR('${p.id}', '${p.name.replace(/'/g, "\\'")}')">
+                    <button class="secondary icon-btn" title="Client Access QR" onclick="showQR('${p.id}', '${p.name.replace(/'/g, "\\'")}')">
                         <span class="iconify" data-icon="material-symbols:qr-code"></span>
                     </button>
                     <button class="secondary icon-btn" title="Send Status Update" onclick="console.log('Mail clicked', '${p.id}'); sendProjectEmail('${p.id}')">
@@ -373,8 +374,12 @@ function handleSearch(query) {
 }
 
 function editProject(id) {
-    const project = projects.find(p => p.id === id);
-    if (!project) return;
+    const project = projects.find(p => String(p.id) === String(id));
+    if (!project) {
+        console.error('Project not found for editing:', id);
+        alert('Could not find project to edit. Please try Syncing data.');
+        return;
+    }
 
     // Populate form
     document.getElementById('editingId').value = project.id;
@@ -466,16 +471,30 @@ function showQR(id, name) {
     const modalTitle = document.getElementById('modalTitle');
 
     qrContainer.innerHTML = '';
-    modalTitle.textContent = name;
 
     // Use current location but pointing to client.html
     const baseUrl = window.location.href.replace('index.html', '').replace('dashboard.html', '') + 'client.html';
     const qrUrl = `${baseUrl}?id=${id}`;
 
+    // Update Copy Button Logic
+    const copyBtn = document.getElementById('copyLinkBtn');
+    if (copyBtn) {
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(qrUrl).then(() => {
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<span class="iconify" data-icon="material-symbols:check"></span> Link Copied!';
+                setTimeout(() => { copyBtn.innerHTML = originalText; }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('URL: ' + qrUrl); // Fallback for some browsers
+            });
+        };
+    }
+
     new QRCode(qrContainer, {
         text: qrUrl,
-        width: 256,
-        height: 256,
+        width: 200, // Slightly smaller for better fit
+        height: 200,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
@@ -491,7 +510,7 @@ async function deleteProject(id) {
     if (confirm('Delete this project?')) {
         await syncWithGoogleSheets(id, 'deleteProject');
         projects = projects.filter(p => {
-            if (p.id === id) return false;
+            if (String(p.id) === String(id)) return false;
             return true;
         });
         localStorage.setItem('sozha_projects', JSON.stringify(projects));
@@ -500,8 +519,12 @@ async function deleteProject(id) {
 }
 
 async function sendProjectEmail(id) {
-    const project = projects.find(p => p.id === id);
-    if (!project) return;
+    const project = projects.find(p => String(p.id) === String(id));
+    if (!project) {
+        console.error('Project not found for email:', id);
+        alert('Could not find project details. Please try Syncing data.');
+        return;
+    }
 
     if (!project.clientEmail) {
         alert('No email address found for this client!');
