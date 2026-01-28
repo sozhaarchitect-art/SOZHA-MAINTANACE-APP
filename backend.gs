@@ -265,39 +265,59 @@ function sendPaymentReminder(project) {
   var subject = 'Payment Status Update: ' + project.name + ' | SOZHA';
   
   var htmlBody = `
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; border: 1px solid #c5a059;">
-      <div style="background-color: #0a0a0a; padding: 20px; text-align: center;">
-        <h1 style="color: #c5a059; margin: 0; letter-spacing: 2px;">SOZHA</h1>
-        <p style="color: #888; margin: 5px 0 0 0; font-size: 12px; text-transform: uppercase;">Architecture & Maintenance</p>
+    <div style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; color: #ffffff; background-color: #0a0a0a; border: 1px solid #c5a059; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <!-- Header -->
+      <div style="background-color: #141414; padding: 40px 20px; text-align: center; border-bottom: 1px solid rgba(197, 160, 89, 0.2);">
+        <h1 style="color: #c5a059; margin: 0; letter-spacing: 4px; font-weight: 800; text-transform: uppercase; font-size: 28px;">SOZHA</h1>
+        <p style="color: #a0a0a0; margin: 10px 0 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Architecture • Maintenance • Design</p>
       </div>
-      <div style="padding: 30px 20px;">
-        <h2 style="color: #0a0a0a; border-bottom: 2px solid #c5a059; padding-bottom: 10px;">Scheduled Payment Summary</h2>
-        <p>Dear <strong>${project.client}</strong>,</p>
-        <p>This is an automated update regarding the financial status of your project "<strong>${project.name}</strong>" as scheduled for today.</p>
+
+      <!-- Content -->
+      <div style="padding: 40px 30px;">
+        <h2 style="color: #c5a059; font-size: 20px; font-weight: 700; margin-bottom: 25px; border-left: 4px solid #c5a059; padding-left: 15px;">Payment Summary</h2>
+        <p style="font-size: 16px; color: #e0e0e0; line-height: 1.6;">Dear <strong>${project.client}</strong>,</p>
+        <p style="font-size: 15px; color: #a0a0a0; line-height: 1.6; margin-bottom: 30px;">We're providing an updated financial summary for your project: <span style="color: #ffffff;">"${project.name}"</span>.</p>
         
-        <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #c5a059; margin: 20px 0;">
-          <p style="margin: 5px 0;"><strong>Current Stage:</strong> ${project.currentStage || 'N/A'}</p>
-          <p style="margin: 5px 0;"><strong>Total project Cost:</strong> ₹${Number(project.totalCost).toLocaleString()}</p>
-          <p style="margin: 5px 0;"><strong>Total Paid:</strong> ₹${Number(project.paidAmount).toLocaleString()}</p>
-          <p style="margin: 5px 0; color: ${balance > 0 ? '#d32f2f' : '#388e3c'}; font-size: 18px;"><strong>Balance Due:</strong> ₹${balance.toLocaleString()}</p>
+        <!-- Financial Card -->
+        <div style="background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 35px;">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="color: #a0a0a0; font-size: 14px;">Current Stage</span>
+              <span style="color: #ffffff; font-weight: 600;">${project.currentStage || 'Process Ongoing'}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="color: #a0a0a0; font-size: 14px;">Total Cost</span>
+              <span style="color: #ffffff; font-weight: 600;">₹${Number(project.totalCost).toLocaleString()}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="color: #a0a0a0; font-size: 14px;">Amount Paid</span>
+              <span style="color: #4CAF50; font-weight: 600;">₹${Number(project.paidAmount).toLocaleString()}</span>
+            </div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(197, 160, 89, 0.3); display: flex; justify-content: space-between;">
+              <span style="color: #c5a059; font-weight: 700; font-size: 16px;">Balance Due</span>
+              <span style="color: #ff4444; font-weight: 800; font-size: 20px;">₹${balance.toLocaleString()}</span>
+            </div>
+          </div>
         </div>
 
-        <div style="background-color: #1a1a1a; padding: 30px; border-radius: 12px; text-align: center; margin: 30px 0; border: 1px solid #c5a059;">
-          <h3 style="color: #ffffff; margin-top: 0; font-size: 18px; letter-spacing: 1px;">Client Access QR</h3>
-          <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; margin-bottom: 15px;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://sozha.vercel.app/client.html?id=' + project.id)}" alt="Client Access QR" style="display: block; width: 150px; height: 150px;">
+        <!-- QR/Access Section -->
+        <div style="background: linear-gradient(145deg, #1a1a1a 0%, #0a0a0a 100%); padding: 35px 20px; border-radius: 12px; text-align: center; border: 1px solid #c5a059;">
+          <p style="color: #ffffff; margin-top: 0; font-size: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">Client Dashboard Access</p>
+          <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://sozha.vercel.app/client.html?id=' + project.id)}" alt="Dashboard QR" style="display: block; width: 150px; height: 150px;">
           </div>
-          <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Scan to view project status & details</p>
-          <a href="https://sozha.vercel.app/client.html?id=${project.id}" style="background-color: #c5a059; color: #000; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;">View Project Dashboard</a>
+          <p style="font-size: 12px; color: #a0a0a0; margin: 15px 0 25px 0;">Scan this code to view project status & detailed breakdown.</p>
+          <a href="https://sozha.vercel.app/client.html?id=${project.id}" style="background-color: #c5a059; color: #000000; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 800; display: inline-block; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Open Dashboard</a>
         </div>
         
-        <p>Please ensure all payments are up to date to avoid any delays in the project timeline.</p>
-        <p style="margin-top: 30px;">Best regards,</p>
-        <p><strong>The SOZHA Team</strong><br>
-        <small style="color: #888;">SOZHAARCHITECT@GMAIL.COM</small></p>
+        <p style="font-size: 14px; color: #888; text-align: center; margin-top: 30px;">Maintain a clear balance for uninterrupted project progress.</p>
       </div>
-      <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 11px; color: #999;">
-        Copyright &copy; ${new Date().getFullYear()} SOZHA. All rights reserved.
+
+      <!-- Footer -->
+      <div style="background-color: #141414; padding: 25px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+        <p style="margin: 0; font-weight: 700; color: #c5a059; font-size: 14px;">The SOZHA Team</p>
+        <p style="margin: 5px 0 0 0; color: #666; font-size: 11px;">sozhaarchitect@gmail.com</p>
+        <p style="margin: 20px 0 0 0; color: #444; font-size: 10px; text-transform: uppercase;">© ${new Date().getFullYear()} SOZHA Architecture & Maintenance</p>
       </div>
     </div>
   `;
@@ -325,44 +345,55 @@ function sendProjectLink(project, baseUrl, customMessage) {
   
   var subject = 'Project Status Update: ' + project.name + ' | SOZHA';
   var htmlBody = `
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; border: 1px solid #c5a059;">
-      <div style="background-color: #0a0a0a; padding: 20px; text-align: center;">
-        <h1 style="color: #c5a059; margin: 0; letter-spacing: 2px;">SOZHA</h1>
-        <p style="color: #888; margin: 5px 0 0 0; font-size: 12px; text-transform: uppercase;">Architecture & Maintenance</p>
+    <div style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; color: #ffffff; background-color: #0a0a0a; border: 1px solid #c5a059; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <!-- Header -->
+      <div style="background-color: #141414; padding: 40px 20px; text-align: center; border-bottom: 1px solid rgba(197, 160, 89, 0.2);">
+        <h1 style="color: #c5a059; margin: 0; letter-spacing: 4px; font-weight: 800; text-transform: uppercase; font-size: 28px;">SOZHA</h1>
+        <p style="color: #a0a0a0; margin: 10px 0 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Architecture • Maintenance • Design</p>
       </div>
-      <div style="padding: 30px 20px;">
-        <h2 style="color: #0a0a0a; border-bottom: 2px solid #c5a059; padding-bottom: 10px;">Project Status Update</h2>
-        <p>Dear <strong>${project.client}</strong>,</p>
-        <p>We are writing to provide you with an update on your project: "<strong>${project.name}</strong>".</p>
+
+      <!-- Content -->
+      <div style="padding: 40px 30px;">
+        <h2 style="color: #c5a059; font-size: 20px; font-weight: 700; margin-bottom: 25px; border-left: 4px solid #c5a059; padding-left: 15px;">Project Status Update</h2>
+        <p style="font-size: 16px; color: #e0e0e0; line-height: 1.6;">Dear <strong>${project.client}</strong>,</p>
+        <p style="font-size: 15px; color: #a0a0a0; line-height: 1.6;">We're sharing the latest progress update for your project: <span style="color: #ffffff;">"${project.name}"</span>.</p>
         
-        <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #c5a059; margin: 20px 0;">
-          <p style="margin: 5px 0;"><strong>Current Status:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #c5a059;">${project.status}</span></p>
-          <p style="margin: 5px 0;"><strong>Active Stage:</strong> ${project.currentStage || 'Initial Phase'}</p>
+        <!-- Status Info -->
+        <div style="background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); margin: 30px 0;">
+          <div style="margin-bottom: 15px;">
+            <span style="color: #a0a0a0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Current Status</span>
+            <div style="color: #c5a059; font-size: 18px; font-weight: 800; text-transform: uppercase; margin-top: 5px;">${project.status}</div>
+          </div>
+          <div>
+            <span style="color: #a0a0a0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Active Phase</span>
+            <div style="color: #ffffff; font-size: 16px; font-weight: 600; margin-top: 5px;">${project.currentStage || 'Initial Design'}</div>
+          </div>
         </div>
 
-        ${customMessage ? `<div style="margin: 20px 0; padding: 15px; background-color: #fff9e6; border: 1px dashed #c5a059; color: #555;">
-          <strong>Message from SOZHA:</strong><br>
-          ${customMessage}
+        ${customMessage ? `
+        <div style="margin: 30px 0; padding: 20px; background-color: rgba(197, 160, 89, 0.05); border: 1px dashed #c5a059; border-radius: 8px; color: #d0d0d0; font-style: italic; line-height: 1.6;">
+          <strong style="color: #c5a059; font-style: normal; display: block; margin-bottom: 5px;">A message from our team:</strong>
+          "${customMessage}"
         </div>` : ''}
 
-        <p>You can track real-time progress, view designs, and check financial details through your personal dashboard.</p>
+        <p style="color: #a0a0a0; font-size: 14px; margin-bottom: 30px;">For real-time designs, documents, and financial tracking, access your secure dashboard below.</p>
 
-        <div style="background-color: #1a1a1a; padding: 30px; border-radius: 12px; text-align: center; margin: 30px 0; border: 1px solid #c5a059;">
-          <h3 style="color: #ffffff; margin-top: 0; font-size: 18px; letter-spacing: 1px;">Client Access QR</h3>
-          <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; margin-bottom: 15px;">
-            <img src="${qrImageUrl}" alt="Client Access QR" style="display: block; width: 150px; height: 150px;">
+        <!-- QR/Access Section -->
+        <div style="background: linear-gradient(145deg, #1a1a1a 0%, #0a0a0a 100%); padding: 35px 20px; border-radius: 12px; text-align: center; border: 1px solid #c5a059;">
+          <p style="color: #ffffff; margin-top: 0; font-size: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">Secure Client QR</p>
+          <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);">
+            <img src="${qrImageUrl}" alt="Dashboard QR" style="display: block; width: 150px; height: 150px;">
           </div>
-          <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Scan to view project status</p>
-          <a href="${clientUrl}" style="background-color: #c5a059; color: #000; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;">View Project Dashboard</a>
+          <p style="font-size: 12px; color: #a0a0a0; margin: 15px 0 25px 0;">Scan to view your digital project board.</p>
+          <a href="${clientUrl}" style="background-color: #c5a059; color: #000000; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 800; display: inline-block; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">View Dashboard</a>
         </div>
-
-        <p>Thank you for choosing SOZHA.</p>
-        <p style="margin-top: 30px;">Best regards,</p>
-        <p><strong>The SOZHA Team</strong><br>
-        <small style="color: #888;">SOZHAARCHITECT@GMAIL.COM</small></p>
       </div>
-      <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 11px; color: #999;">
-        Copyright &copy; ${new Date().getFullYear()} SOZHA. All rights reserved.
+
+      <!-- Footer -->
+      <div style="background-color: #141414; padding: 25px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+        <p style="margin: 0; font-weight: 700; color: #c5a059; font-size: 14px;">The SOZHA Team</p>
+        <p style="margin: 5px 0 0 0; color: #666; font-size: 11px;">sozhaarchitect@gmail.com</p>
+        <p style="margin: 20px 0 0 0; color: #444; font-size: 10px; text-transform: uppercase;">© ${new Date().getFullYear()} SOZHA Architecture • India</p>
       </div>
     </div>
   `;
