@@ -20,42 +20,38 @@
     <meta name="theme-color" content="#c5a059">
 </head>
 
-<body>
+<body class="admin-view">
+    <div class="liquid-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob blob-4"></div>
+    </div>
     <div id="splash-screen">
         <img src="logo.png" alt="Sozha Architecture Logo" id="splash-logo">
     </div>
+    <div id="meetingAlert" class="meeting-alert" style="display: none;">
+        <div class="alert-content">
+            <span class="iconify" data-icon="material-symbols:event-upcoming-outline"></span>
+            <div class="alert-text">
+                <strong>Today's Meeting:</strong> <span id="meetingAlertInfo">Loading...</span>
+            </div>
+        </div>
+        <button class="alert-close" onclick="dismissMeetingAlert()">
+            <span class="iconify" data-icon="material-symbols:close"></span>
+        </button>
+    </div>
     <div class="container">
-        <div id="meetingAlert" class="meeting-alert" style="display: none;">
-            <div class="alert-content">
-                <span class="iconify" data-icon="material-symbols:event-upcoming-outline"></span>
-                <div class="alert-text">
-                    <strong>Today's Meeting:</strong> <span id="meetingAlertInfo">Loading...</span>
+        <header>
+            <div class="brand-group">
+                <div class="logo">SOZHA</div>
+                <div class="brand-divider"></div>
+                <div class="title-area">
+                    <div class="title">MAINTENANCE SYSTEM</div>
+                    <div id="networkStatus" class="status-indicator">● Online</div>
                 </div>
             </div>
-            <button class="alert-close" onclick="dismissMeetingAlert()">
-                <span class="iconify" data-icon="material-symbols:close"></span>
-            </button>
-        </div>
-        <header>
-            <div class="logo">SOZHA</div>
-            <div class="title">MAINTENANCE SYSTEM <span id="networkStatus"
-                    style="font-size: 0.6rem; vertical-align: middle; margin-left: 0.5rem; color: #4CAF50;">●
-                    Online</span></div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <button class="secondary" onclick="updateScriptUrl()" title="Settings">
-                    <span class="iconify" data-icon="material-symbols:settings-outline"></span>
-                </button>
-                <button id="installApp" style="display: none;" class="secondary">
-                    <span class="iconify" data-icon="material-symbols:download"></span>
-                    Install App
-                </button>
-                <button class="secondary" onclick="openInstallGuide()" title="Installation Guide">
-                    <span class="iconify" data-icon="material-symbols:help-outline"></span>
-                </button>
-                <button class="secondary" id="syncBtn" onclick="fetchProjects(true)" title="Sync from Cloud">
-                    <span class="iconify" data-icon="material-symbols:cloud-sync-outline"></span>
-                    Sync
-                </button>
+            <div class="header-actions">
                 <div class="search-container" id="searchContainer">
                     <input type="text" id="projectSearch" placeholder="Search..." oninput="handleSearch(this.value)">
                     <button class="secondary icon-btn"
@@ -63,7 +59,19 @@
                         <span class="iconify" data-icon="material-symbols:search"></span>
                     </button>
                 </div>
-                <button id="addProjectBtn">
+                <div class="action-buttons-group">
+                    <button class="secondary icon-btn" onclick="updateScriptUrl()" title="Settings">
+                        <span class="iconify" data-icon="material-symbols:settings-outline"></span>
+                    </button>
+                    <button class="secondary icon-btn" onclick="openInstallGuide()" title="Installation Guide">
+                        <span class="iconify" data-icon="material-symbols:help-outline"></span>
+                    </button>
+                    <button class="secondary" id="syncBtn" onclick="fetchProjects(true)" title="Sync from Cloud">
+                        <span class="iconify" data-icon="material-symbols:cloud-sync-outline"></span>
+                        Sync
+                    </button>
+                </div>
+                <button id="addProjectBtn" class="primary-btn">
                     <span class="iconify" data-icon="material-symbols:add"></span>
                     Add New Project
                 </button>
@@ -164,8 +172,7 @@
     </div>
 
     <!-- QR Modal -->
-    <div id="qrModal" class="modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+    <div id="qrModal" class="modal">
         <div class="card" style="background:#1a1a1a; max-width:400px; text-align:center; padding: 2rem;">
             <h3 id="modalTitle">Client Access QR</h3>
             <div id="qrcode" class="qr-container"
@@ -182,7 +189,7 @@
     </div>
 
     <!-- Installation Guide Modal -->
-    <div id="installGuideModal" class="modal" style="display:none;">
+    <div id="installGuideModal" class="modal">
         <div class="card install-guide-card">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
                 <h3>Install Sozha Maintenance App</h3>
@@ -292,6 +299,20 @@
                     <button type="button" class="secondary" onclick="closeMeetingModal()">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Custom Filterable Modal -->
+    <div id="customModal" class="modal">
+        <div class="custom-modal-content">
+            <h3 id="customModalTitle" class="custom-modal-title"></h3>
+            <p id="customModalMessage" class="custom-modal-message"></p>
+            <div id="customModalInputContainer" style="display: none;">
+                <input type="text" id="customModalInput" class="custom-modal-input">
+            </div>
+            <div id="customModalActions" class="custom-modal-actions">
+                <!-- Buttons will be injected here -->
+            </div>
         </div>
     </div>
 

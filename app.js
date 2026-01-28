@@ -298,46 +298,58 @@ function renderProjects() {
         );
     }
 
-    container.innerHTML = filtered.map(p => `
+    container.innerHTML = filtered.map(p => {
+        const balance = p.totalCost - p.paidAmount;
+        const progress = (p.paidAmount / p.totalCost * 100) || 0;
+
+        return `
         <div class="card">
+            <span class="status-badge status-${p.status ? p.status.toLowerCase().replace(/\s+/g, '-') : 'unknown'}">
+                ${p.status || 'Unknown'}
+            </span>
             <h3>${p.name}</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Client: ${p.client}</p>
+            <p style="color: var(--text-secondary); margin: -0.5rem 0 1rem 0; font-size: 0.9rem;">Client: ${p.client}</p>
+            
             <div class="stat-row">
                 <span class="stat-label">Stage</span>
                 <span class="stat-value">${p.currentStage || 'Not set'}</span>
             </div>
+
             <div class="progress-container">
-                <div class="progress-bar" style="width: ${(p.paidAmount / p.totalCost * 100) || 0}%"></div>
+                <div class="progress-bar" style="width: ${progress}%"></div>
             </div>
+
             <div class="stat-row">
-                <span class="stat-label">Payment</span>
+                <span class="stat-label">Investment</span>
                 <span class="stat-value">₹${p.paidAmount.toLocaleString()} / ₹${p.totalCost.toLocaleString()}</span>
             </div>
-            <div class="stat-row" style="margin-top: -0.2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.3rem;">
-                <span class="stat-label" style="font-size: 0.75rem;">Balance Due</span>
-                <span class="stat-value" style="color: ${(p.totalCost - p.paidAmount) > 0 ? '#ff4444' : '#4CAF50'}; font-size: 0.75rem;">
-                    ₹${(p.totalCost - p.paidAmount).toLocaleString()}
+
+            <div class="stat-row" style="margin-top: 0.5rem; padding-top: 0.8rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                <span class="stat-label" style="font-weight: 800; font-size: 0.85rem;">BALANCE DUE</span>
+                <span class="stat-value" style="color: ${balance > 0 ? '#ff4444' : '#4CAF50'}; font-weight: 800; font-size: 1rem;">
+                    ₹${balance.toLocaleString()}
                 </span>
             </div>
+
             <div class="card-actions">
-                <span class="status-badge status-${p.status ? p.status.toLowerCase().replace(/\s+/g, '-') : 'unknown'}">${p.status || 'Unknown'}</span>
-                <div class="action-buttons">
-                    <button class="secondary icon-btn" title="Edit Project" onclick="console.log('Edit clicked', '${p.id}'); editProject('${p.id}')">
+                <div class="action-buttons" style="display: flex; gap: 0.6rem; width: 100%; justify-content: space-between;">
+                    <button class="secondary icon-btn" title="Edit" onclick="editProject('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:edit-outline"></span>
                     </button>
-                    <button class="secondary icon-btn" title="Client Access QR" onclick="showQR('${p.id}', '${p.name.replace(/'/g, "\\'")}')">
+                    <button class="secondary icon-btn" title="QR Access" onclick="showQR('${p.id}', '${p.name.replace(/'/g, "\\'")}')">
                         <span class="iconify" data-icon="material-symbols:qr-code"></span>
                     </button>
-                    <button class="secondary icon-btn" title="Send Status Update" onclick="console.log('Mail clicked', '${p.id}'); sendProjectEmail('${p.id}')">
+                    <button class="secondary icon-btn" title="Send Status" onclick="sendProjectEmail('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:mail-outline"></span>
                     </button>
-                    <button class="secondary icon-btn" title="Delete Project" onclick="deleteProject('${p.id}')">
+                    <button class="secondary icon-btn" title="Delete" style="color: #ff4444;" onclick="deleteProject('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:delete-outline"></span>
                     </button>
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     if (filtered.length === 0) {
         container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-secondary);">No ${activeType} projects found.</div>`;
@@ -507,58 +519,52 @@ function closeModal() {
     document.getElementById('qrModal').style.display = 'none';
 }
 async function deleteProject(id) {
-    if (confirm('Delete this project?')) {
-        await syncWithGoogleSheets(id, 'deleteProject');
-        projects = projects.filter(p => {
-            if (String(p.id) === String(id)) return false;
-            return true;
-        });
-        localStorage.setItem('sozha_projects', JSON.stringify(projects));
-        renderProjects();
-    }
+    showCustomConfirm('Delete Project', 'Are you sure you want to delete this project? This action cannot be undone.', async (confirmed) => {
+        if (confirmed) {
+            await syncWithGoogleSheets(id, 'deleteProject');
+            projects = projects.filter(p => String(p.id) !== String(id));
+            localStorage.setItem('sozha_projects', JSON.stringify(projects));
+            renderProjects();
+        }
+    });
 }
 
 async function sendProjectEmail(id) {
     const project = projects.find(p => String(p.id) === String(id));
-    if (!project) {
-        console.error('Project not found for email:', id);
-        alert('Could not find project details. Please try Syncing data.');
-        return;
-    }
+    if (!project) return;
 
     if (!project.clientEmail) {
-        alert('No email address found for this client!');
+        showCustomAlert('Missing Email', 'No email address found for this client!');
         return;
     }
 
-    const message = prompt(`Send project update to client?\n\nClient: ${project.client}\nEmail: ${project.clientEmail}\nProject: ${project.name}\n\nEnter a custom message (optional):`, `Current Status: ${project.status} | Stage: ${project.currentStage}`);
+    const defaultMsg = `Current Status: ${project.status} | Stage: ${project.currentStage}`;
 
-    if (message === null) return; // User cancelled
+    showCustomPrompt('Send Update', `Send project update to ${project.client}?`, defaultMsg, async (message) => {
+        if (message === null) return;
 
-    const baseUrl = window.location.href.split('?')[0];
+        const baseUrl = window.location.href.split('?')[0];
 
-    try {
-        showNotification(`Sending status update to ${project.clientEmail}...`);
-        const url = localStorage.getItem(scriptUrlKey);
+        try {
+            showNotification(`Sending status update...`);
+            const url = localStorage.getItem(scriptUrlKey);
 
-        console.log('Attempting to send email via:', url);
+            await fetch(url, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: 'sendProjectLink',
+                    data: { project, baseUrl, message: message }
+                })
+            });
 
-        // Reverting to the most compatible GAS fetch method: no-cors + text/plain
-        await fetch(url, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: 'sendProjectLink',
-                data: { project, baseUrl, message: message }
-            })
-        });
+            showNotification('Update request sent!');
+        } catch (e) {
+            showNotification('Request failed.', true);
+        }
+    });
 
-        showNotification('Update request sent! Check your Sent folder soon.');
-    } catch (e) {
-        console.error('Email request failed:', e);
-        showNotification('Request failed. Check your internet or script URL.', true);
-    }
 }
 
 // CALENDAR & MEETING LOGIC
@@ -784,15 +790,97 @@ function showNotification(msg, isError = false) {
 
 function updateScriptUrl() {
     const currentUrl = localStorage.getItem(scriptUrlKey) || 'None';
-    let newUrl = prompt(`Current URL: ${currentUrl.substring(0, 40)}...\n\nEnter your Google Script Web App URL:`, currentUrl);
 
-    if (newUrl) {
-        newUrl = newUrl.trim();
-        if (newUrl.includes('script.google.com')) {
-            localStorage.setItem(scriptUrlKey, newUrl);
-            location.reload();
-        } else {
-            alert('Invalid URL! Please paste the "Web App URL" from Apps Script (Deployment).');
+    showCustomPrompt('Settings', 'Update Google Script Web App URL:', currentUrl, (newUrl) => {
+        if (newUrl) {
+            newUrl = newUrl.trim();
+            if (newUrl.includes('script.google.com')) {
+                localStorage.setItem(scriptUrlKey, newUrl);
+                location.reload();
+            } else {
+                showCustomAlert('Invalid URL', 'Please paste a valid Google Script Web App URL.');
+            }
         }
+    });
+}
+
+// Custom Modal System
+function showCustomModal(title, msg, type = 'alert', defaultVal = '', callback = null) {
+    const modal = document.getElementById('customModal');
+    const titleEl = document.getElementById('customModalTitle');
+    const msgEl = document.getElementById('customModalMessage');
+    const inputContainer = document.getElementById('customModalInputContainer');
+    const inputEl = document.getElementById('customModalInput');
+    const actionsEl = document.getElementById('customModalActions');
+
+    titleEl.textContent = title;
+    msgEl.textContent = msg;
+    actionsEl.innerHTML = '';
+
+    if (type === 'prompt') {
+        inputContainer.style.display = 'block';
+        inputEl.value = defaultVal;
+    } else {
+        inputContainer.style.display = 'none';
     }
+
+    if (type === 'alert') {
+        const okBtn = document.createElement('button');
+        okBtn.textContent = 'OK';
+        okBtn.onclick = () => {
+            modal.style.display = 'none';
+            if (callback) callback();
+        };
+        actionsEl.appendChild(okBtn);
+    } else if (type === 'confirm') {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'secondary';
+        cancelBtn.onclick = () => {
+            modal.style.display = 'none';
+            if (callback) callback(false);
+        };
+
+        const confirmBtn = document.createElement('button');
+        confirmBtn.textContent = 'Confirm';
+        confirmBtn.onclick = () => {
+            modal.style.display = 'none';
+            if (callback) callback(true);
+        };
+
+        actionsEl.appendChild(cancelBtn);
+        actionsEl.appendChild(confirmBtn);
+    } else if (type === 'prompt') {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'secondary';
+        cancelBtn.onclick = () => {
+            modal.style.display = 'none';
+            if (callback) callback(null);
+        };
+
+        const submitBtn = document.createElement('button');
+        submitBtn.textContent = 'Submit';
+        submitBtn.onclick = () => {
+            modal.style.display = 'none';
+            if (callback) callback(inputEl.value);
+        };
+
+        actionsEl.appendChild(cancelBtn);
+        actionsEl.appendChild(submitBtn);
+    }
+
+    modal.style.display = 'flex';
+}
+
+function showCustomAlert(title, msg) {
+    showCustomModal(title, msg, 'alert');
+}
+
+function showCustomConfirm(title, msg, callback) {
+    showCustomModal(title, msg, 'confirm', '', callback);
+}
+
+function showCustomPrompt(title, msg, defaultVal, callback) {
+    showCustomModal(title, msg, 'prompt', defaultVal, callback);
 }
