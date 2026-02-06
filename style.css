@@ -1062,3 +1062,43 @@ textarea:focus {
         transform: rotate(360deg);
     }
 }
+
+/* Unit Converter Styles */
+.converter-result-box {
+    animation: resultPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes resultPop {
+    from {
+        transform: scale(0.95);
+        opacity: 0.5;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+#converterInput::-webkit-inner-spin-button,
+#converterInput::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+
+#converterInput,
+#inputFeet,
+#inputInches {
+    -moz-appearance: textfield;
+    appearance: textfield;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.imperial-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr;
+    gap: 0.5rem;
+}

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOZHA ARCHITECTS | Design Packages</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #030303;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --accent-color: #c5a059;
+            --text-primary: #ffffff;
+            --text-secondary: #d0d0d0;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(25px) saturate(220%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            padding: 4rem 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 5rem;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 0.5rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            letter-spacing: 0.2rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .package-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .package-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            backdrop-filter: var(--glass-blur);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .package-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-color);
+        }
+
+        .package-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .package-price {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-bottom: 2.5rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .feature-item span {
+            color: var(--accent-color);
+        }
+
+        .rules-list {
+            list-style: none;
+            padding-left: 0.5rem;
+        }
+
+        .rule-item {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .rule-item::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+        }
+
+        .badge {
+            position: absolute;
+            top: 2rem;
+            right: -2rem;
+            background: var(--accent-color);
+            color: #000;
+            padding: 0.5rem 3rem;
+            transform: rotate(45deg);
+            font-weight: 800;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .footer {
+            margin-top: 5rem;
+            text-align: center;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .btn-print {
+            margin-top: 2rem;
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.2s;
+        }
+
+        .btn-print:hover {
+            transform: scale(1.05);
+        }
+
+        @media print {
+            .btn-print {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+            }
+
+            .package-card {
+                break-inside: avoid;
+                border: 1px solid #ccc !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo">SOZHA</div>
+        <div class="subtitle">Architecture • Maintenance • Design</div>
+    </div>
+
+    <div class="package-container">
+        <!-- Basic Package -->
+        <div class="package-card">
+            <div class="package-name">Basic Package</div>
+            <div class="package-price">Interior: ₹15/sq ft | No elevation</div>
+
+            <div class="section-title">What's Included</div>
+            <ul class="feature-list">
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Basic interior
+                    design planning</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> 2D floor plans
+                </li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Basic material
+                    recommendations</li>
+            </ul>
+
+            <div class="section-title">Package Rules</div>
+            <ul class="rules-list">
+                <li class="rule-item">Elevation design is not included</li>
+                <li class="rule-item">Interior rate is fixed at ₹15 per sq ft</li>
+                <li class="rule-item">Standard discount of 5% applies</li>
+                <li class="rule-item">1 revision included</li>
+                <li class="rule-item">Suitable for small to medium projects</li>
+            </ul>
+        </div>
+
+        <!-- Standard Package -->
+        <div class="package-card" style="border-color: rgba(197, 160, 89, 0.4);">
+            <div class="badge">Popular</div>
+            <div class="package-name">Standard Package</div>
+            <div class="package-price">Interior: ₹25/sq ft | Elevation: ₹12/sq ft</div>
+
+            <div class="section-title">What's Included</div>
+            <ul class="feature-list">
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Complete
+                    interior design</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> 3D renderings
+                </li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Detailed
+                    material schedule</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Elevation
+                    design included</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> 2 revisions
+                    included</li>
+            </ul>
+
+            <div class="section-title">Package Rules</div>
+            <ul class="rules-list">
+                <li class="rule-item">Interior rate fixed at ₹25 per sq ft</li>
+                <li class="rule-item">Elevation rate fixed at ₹12 per sq ft</li>
+                <li class="rule-item">Discount range: 5% to 7%</li>
+                <li class="rule-item">Best for medium-sized residential projects</li>
+            </ul>
+        </div>
+
+        <!-- Luxury Package -->
+        <div class="package-card" style="border-color: var(--accent-color);">
+            <div class="package-name">Luxury Package</div>
+            <div class="package-price">Interior: ₹40/sq ft | Elevation: ₹20/sq ft</div>
+
+            <div class="section-title">What's Included</div>
+            <ul class="feature-list">
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Premium
+                    interior design</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Photorealistic
+                    3D renders</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Custom
+                    material sourcing</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Premium
+                    elevation design</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Lighting
+                    design consultation</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Unlimited
+                    revisions</li>
+                <li class="feature-item"><span class="iconify" data-icon="material-symbols:check"></span> Dedicated
+                    project manager</li>
+            </ul>
+
+            <div class="section-title">Package Rules</div>
+            <ul class="rules-list">
+                <li class="rule-item">Interior rate fixed at ₹40 per sq ft</li>
+                <li class="rule-item">Elevation rate fixed at ₹20 per sq ft</li>
+                <li class="rule-item">Discount range: 5% to 10%</li>
+                <li class="rule-item">Includes lighting & consultation</li>
+                <li class="rule-item">Suitable for high-end luxury projects</li>
+            </ul>
+        </div>
+    </div>
+
+    <button class="btn-print" onclick="window.print()">
+        <span class="iconify" data-icon="material-symbols:print"></span>
+        Download as PDF
+    </button>
+
+    <div class="footer">
+        © 2026 SOZHA ARCHITECTS • Designed for Excellence
+    </div>
+</body>
+
+</html>

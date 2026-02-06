@@ -97,6 +97,20 @@ document.addEventListener('DOMContentLoaded', () => {
         guideInstallBtn.addEventListener('click', triggerInstall);
     }
 
+    const copyConverterBtn = document.getElementById('copyConverterBtn');
+    if (copyConverterBtn) {
+        copyConverterBtn.onclick = () => {
+            const resultText = document.getElementById('converterResult').textContent;
+            navigator.clipboard.writeText(resultText).then(() => {
+                const originalText = copyConverterBtn.innerHTML;
+                copyConverterBtn.innerHTML = '<span class="iconify" data-icon="material-symbols:check"></span> Copied!';
+                setTimeout(() => { copyConverterBtn.innerHTML = originalText; }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        };
+    }
+
     // Network Status Indicators
     window.addEventListener('online', updateNetworkStatus);
     window.addEventListener('offline', updateNetworkStatus);
@@ -883,4 +897,110 @@ function showCustomConfirm(title, msg, callback) {
 
 function showCustomPrompt(title, msg, defaultVal, callback) {
     showCustomModal(title, msg, 'prompt', defaultVal, callback);
+}
+
+// UNIT CONVERTER LOGIC
+function openConverterModal() {
+    document.getElementById('converterModal').style.display = 'flex';
+    document.getElementById('converterFrom').value === 'ft-in' ?
+        document.getElementById('inputFeet').focus() :
+        document.getElementById('converterInput').focus();
+}
+
+function closeConverterModal() {
+    document.getElementById('converterModal').style.display = 'none';
+}
+
+function handleUnitChange() {
+    const fromUnit = document.getElementById('converterFrom').value;
+    const metricGroup = document.getElementById('metricInputGroup');
+    const imperialGroup = document.getElementById('imperialInputGroup');
+
+    if (fromUnit === 'ft-in') {
+        metricGroup.style.display = 'none';
+        imperialGroup.style.display = 'block';
+    } else {
+        metricGroup.style.display = 'block';
+        imperialGroup.style.display = 'none';
+    }
+    calculateConversion();
+}
+
+function calculateConversion() {
+    const fromUnit = document.getElementById('converterFrom').value;
+    const toUnit = document.getElementById('converterTo').value;
+    const resultEl = document.getElementById('converterResult');
+    const labelEl = document.getElementById('converterResultLabel');
+
+    let meters = 0;
+
+    // 1. Convert "From" to base unit (Meters)
+    if (fromUnit === 'm') {
+        meters = parseFloat(document.getElementById('converterInput').value) || 0;
+    } else if (fromUnit === 'cm') {
+        meters = (parseFloat(document.getElementById('converterInput').value) || 0) / 100;
+    } else if (fromUnit === 'mm') {
+        meters = (parseFloat(document.getElementById('converterInput').value) || 0) / 1000;
+    } else if (fromUnit === 'ft-in') {
+        const ft = parseFloat(document.getElementById('inputFeet').value) || 0;
+        const inc = parseFloat(document.getElementById('inputInches').value) || 0;
+        const frac = parseFloat(document.getElementById('inputFraction').value) || 0;
+        const totalFeet = ft + (inc + frac) / 12;
+        meters = totalFeet / 3.28084;
+    }
+
+    // 2. Convert base unit (Meters) to "To" unit
+    let result = '';
+    if (toUnit === 'm') {
+        result = meters.toFixed(3) + ' m';
+        labelEl.textContent = 'Result in Meters';
+    } else if (toUnit === 'cm') {
+        result = (meters * 100).toFixed(2) + ' cm';
+        labelEl.textContent = 'Result in Centimeters';
+    } else if (toUnit === 'mm') {
+        result = (meters * 1000).toFixed(1) + ' mm';
+        labelEl.textContent = 'Result in Millimeters';
+    } else if (toUnit === 'ft-decimal') {
+        result = (meters * 3.28084).toFixed(3) + ' ft';
+        labelEl.textContent = 'Result in Feet (Decimal)';
+    } else if (toUnit === 'ft-in') {
+        const totalFeet = meters * 3.28084;
+        result = formatFeetInches(totalFeet);
+        labelEl.textContent = 'Result in Feet & Inches';
+    }
+
+    if (resultEl) resultEl.textContent = result;
+}
+
+function formatFeetInches(decimalFeet) {
+    if (decimalFeet === 0) return '0\' 0"';
+
+    const absoluteFeet = Math.abs(decimalFeet);
+    const feet = Math.floor(absoluteFeet);
+    const remainingInches = (absoluteFeet - feet) * 12;
+    const inches = Math.floor(remainingInches);
+    const fractionalInches = remainingInches - inches;
+
+    // Find closest 16th
+    const sixteenths = Math.round(fractionalInches * 16);
+    let fractionStr = '';
+
+    if (sixteenths === 16) {
+        // Round up to next inch
+        const finalInches = inches + 1;
+        if (finalInches === 12) {
+            return (decimalFeet < 0 ? '-' : '') + (feet + 1) + "' 0\"";
+        }
+        return (decimalFeet < 0 ? '-' : '') + (feet) + "' " + finalInches + '"';
+    }
+
+    if (sixteenths > 0) {
+        const gcd = (a, b) => b ? gcd(b, a % b) : a;
+        const common = gcd(sixteenths, 16);
+        fractionStr = ` ${sixteenths / common}/${16 / common}"`;
+    } else {
+        fractionStr = '"';
+    }
+
+    return (decimalFeet < 0 ? '-' : '') + feet + "' " + inches + fractionStr;
 }

@@ -75,6 +75,14 @@
                     <span class="iconify" data-icon="material-symbols:add"></span>
                     Add New Project
                 </button>
+                <button class="secondary" onclick="openConverterModal()" title="Unit Converter">
+                    <span class="iconify" data-icon="material-symbols:straighten-outline"></span>
+                    Converter
+                </button>
+                <a href="brochure.html" class="secondary" style="text-decoration: none;" target="_blank">
+                    <span class="iconify" data-icon="material-symbols:book-2-outline"></span>
+                    Brochure
+                </a>
             </div>
         </header>
 
@@ -313,6 +321,86 @@
             <div id="customModalActions" class="custom-modal-actions">
                 <!-- Buttons will be injected here -->
             </div>
+        </div>
+    </div>
+
+    <!-- Unit Converter Modal -->
+    <div id="converterModal" class="modal">
+        <div class="card" style="background:#1a1a1a; max-width:450px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h3 style="margin: 0;">Unit Converter</h3>
+                <button class="secondary icon-btn" style="min-width: auto; width: 32px; height: 32px;"
+                    onclick="closeConverterModal()">
+                    <span class="iconify" data-icon="material-symbols:close"></span>
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label>From Unit</label>
+                <select id="converterFrom" onchange="handleUnitChange()">
+                    <option value="m">Meters (m)</option>
+                    <option value="cm">Centimeters (cm)</option>
+                    <option value="mm">Millimeters (mm)</option>
+                    <option value="ft-in">Feet & Inches (Fractional)</option>
+                </select>
+            </div>
+
+            <div id="metricInputGroup" class="form-group">
+                <label>Input Value</label>
+                <input type="number" id="converterInput" placeholder="0.00" oninput="calculateConversion()">
+            </div>
+
+            <div id="imperialInputGroup" class="form-group" style="display: none;">
+                <label>Input Value (Feet / Inches / Fraction)</label>
+                <div class="imperial-inputs">
+                    <input type="number" id="inputFeet" placeholder="Feet" oninput="calculateConversion()">
+                    <input type="number" id="inputInches" placeholder="Inches" oninput="calculateConversion()">
+                    <select id="inputFraction" onchange="calculateConversion()">
+                        <option value="0">0</option>
+                        <option value="0.0625">1/16"</option>
+                        <option value="0.125">1/8"</option>
+                        <option value="0.1875">3/16"</option>
+                        <option value="0.25">1/4"</option>
+                        <option value="0.3125">5/16"</option>
+                        <option value="0.375">3/8"</option>
+                        <option value="0.4375">7/16"</option>
+                        <option value="0.5">1/2"</option>
+                        <option value="0.5625">9/16"</option>
+                        <option value="0.625">5/8"</option>
+                        <option value="0.6875">11/16"</option>
+                        <option value="0.75">3/4"</option>
+                        <option value="0.8125">13/16"</option>
+                        <option value="0.875">7/8"</option>
+                        <option value="0.9375">15/16"</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>To Unit</label>
+                <select id="converterTo" onchange="calculateConversion()">
+                    <option value="m">Meters (m)</option>
+                    <option value="cm">Centimeters (cm)</option>
+                    <option value="mm">Millimeters (mm)</option>
+                    <option value="ft-decimal">Feet (Decimal)</option>
+                    <option value="ft-in" selected>Feet & Inches (Fractional)</option>
+                </select>
+            </div>
+
+            <div class="converter-result-box"
+                style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 16px; text-align: center; margin: 1.5rem 0; border: 1px solid var(--border-color);">
+                <div id="converterResultLabel"
+                    style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">
+                    Result</div>
+                <div id="converterResult" style="font-size: 2.2rem; font-weight: 800; color: var(--accent-color);">0' 0"
+                </div>
+            </div>
+
+            <button id="copyConverterBtn" class="btn"
+                style="width: 100%; background: var(--accent-color); color: black;">
+                <span class="iconify" data-icon="material-symbols:content-copy"></span>
+                Copy Result
+            </button>
         </div>
     </div>
 
