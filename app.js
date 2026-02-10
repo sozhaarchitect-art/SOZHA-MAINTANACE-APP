@@ -6,7 +6,7 @@ let meetings = []; // New global for meetings
 let activeType = 'Design';
 let searchQuery = '';
 const scriptUrlKey = 'sozha_script_url';
-const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbzXdH1ujPPOQ0ZWa8lPRSxcTm7BGQs8HW3wE67T2X_fYL5oQTuhstNrfA6xhOkoaGk/exec';
+const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbxDizvHJvOZNcZlwPIXTdgm9Deh-uYF0wuKO6i8WhPbpCOWumuwksn_VlwOl2Yg8FfE/exec';
 let statusChart = null;
 let calendar = null; // New global for FullCalendar instance
 
@@ -182,6 +182,7 @@ async function handleFormSubmit(e) {
         name: document.getElementById('projName').value,
         client: document.getElementById('clientName').value,
         clientEmail: document.getElementById('clientEmail').value,
+        clientPhone: document.getElementById('clientPhone').value,
         type: document.getElementById('projType').value,
         totalCost: parseFloat(document.getElementById('totalCost').value) || 0,
         paidAmount: parseFloat(document.getElementById('paidAmount').value) || 0,
@@ -325,7 +326,9 @@ function renderProjects() {
                 ${p.status || 'Unknown'}
             </span>
             <h3>${p.name}</h3>
-            <p style="color: var(--text-secondary); margin: -0.5rem 0 1rem 0; font-size: 0.9rem;">Client: ${p.client}</p>
+            <p style="color: var(--text-secondary); margin: -0.5rem 0 1rem 0; font-size: 0.9rem;">
+                Client: ${p.client} ${p.clientPhone ? `<span style="margin-left:8px; opacity:0.7;">✆ ${p.clientPhone}</span>` : ''}
+            </p>
             
             <div class="stat-row">
                 <span class="stat-label">Stage</span>
@@ -352,6 +355,9 @@ function renderProjects() {
                 <div class="action-buttons" style="display: flex; gap: 0.6rem; width: 100%; justify-content: space-between;">
                     <button class="secondary icon-btn read-voice-btn" title="Read Status" onclick="readProjectStatus('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
+                    </button>
+                    <button class="secondary icon-btn" title="AI Call" style="color: #4CAF50;" onclick="makeAICall('${p.id}')">
+                        <span class="iconify" data-icon="material-symbols:call-outline"></span>
                     </button>
                     <button class="secondary icon-btn" title="Edit" onclick="editProject('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:edit-outline"></span>
@@ -418,6 +424,7 @@ function editProject(id) {
     document.getElementById('projName').value = project.name;
     document.getElementById('clientName').value = project.client;
     document.getElementById('clientEmail').value = project.clientEmail || '';
+    document.getElementById('clientPhone').value = project.clientPhone || '';
     document.getElementById('projType').value = project.type;
     document.getElementById('totalCost').value = project.totalCost;
     document.getElementById('paidAmount').value = project.paidAmount;
@@ -1088,5 +1095,28 @@ function readProjectStatus(projectId) {
                         The balance amount due is ${balance.toLocaleString()} rupees.`;
             speak(msg, 'en-US');
         }
+    }, 500);
+}
+
+function makeAICall(projectId) {
+    const project = projects.find(p => String(p.id) === String(projectId));
+    if (!project || !project.clientPhone) {
+        showCustomAlert('Missing Phone Number', 'No phone number found for this client!');
+        return;
+    }
+
+    startAICall();
+
+    setTimeout(() => {
+        const msg = activeVoiceLang === 'ta-IN' ?
+            `${project.name} குறித்து ${project.client}-ஐ அழைக்கத் தயார் செய்கிறேன்.` :
+            `Preparing to call ${project.client} regarding project ${project.name}.`;
+
+        speak(msg);
+
+        // Delay to allow message to finish or at least start before dialing
+        setTimeout(() => {
+            window.location.href = `tel:${project.clientPhone}`;
+        }, 3000);
     }, 500);
 }

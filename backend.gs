@@ -43,7 +43,8 @@ function doGet(e) {
             currentStage: data[i][9],
             notes: data[i][10],
             lastUpdate: data[i][11],
-            designUrl: data[i][12]
+            designUrl: data[i][12],
+            clientPhone: data[i][13]
           }
         })).setMimeType(ContentService.MimeType.JSON);
       }
@@ -87,7 +88,8 @@ function doGet(e) {
         currentStage: data[i][9],
         notes: data[i][10],
         lastUpdate: data[i][11],
-        designUrl: data[i][12]
+        designUrl: data[i][12],
+        clientPhone: data[i][13]
       });
     }
     return ContentService.createTextOutput(JSON.stringify({status: 'success', data: projects})).setMimeType(ContentService.MimeType.JSON);
@@ -130,7 +132,7 @@ function doPost(e) {
       var paid = project ? (Number(project.paidAmount) || 0) : 0;
       var balance = total - paid;
 
-      sheet.appendRow([project.id, project.name, project.client, project.clientEmail, project.type, project.status, total, paid, balance, project.currentStage, project.notes, project.lastUpdate, project.designUrl]);
+      sheet.appendRow([project.id, project.name, project.client, project.clientEmail, project.type, project.status, total, paid, balance, project.currentStage, project.notes, project.lastUpdate, project.designUrl, project.clientPhone]);
       
       if (baseUrl) {
         logToSheet('Project added. Sending "Started" email to: ' + project.name);
@@ -154,7 +156,7 @@ function doPost(e) {
           var balance = total - paid;
           var oldStatus = rows[i][5];
           
-          sheet.getRange(i + 1, 1, 1, 13).setValues([[project.id, project.name, project.client, project.clientEmail, project.type, project.status, total, paid, balance, project.currentStage, project.notes, project.lastUpdate, project.designUrl]]);
+          sheet.getRange(i + 1, 1, 1, 14).setValues([[project.id, project.name, project.client, project.clientEmail, project.type, project.status, total, paid, balance, project.currentStage, project.notes, project.lastUpdate, project.designUrl, project.clientPhone]]);
           
           if (project.status === 'Completed' && oldStatus !== 'Completed') {
             logToSheet('Status changed to Completed for: ' + project.name + '.');
@@ -445,11 +447,11 @@ function setup() {
     }
   }
   
-  var projectHeaders = ['ID', 'Project Name', 'Client Name', 'Client Email', 'Type', 'Status', 'Total Cost', 'Paid Amount', 'Balance Amount', 'Current Stage', 'Notes', 'Last Update', 'Design URL'];
+  var projectHeaders = ['ID', 'Project Name', 'Client Name', 'Client Email', 'Type', 'Status', 'Total Cost', 'Paid Amount', 'Balance Amount', 'Current Stage', 'Notes', 'Last Update', 'Design URL', 'Client Phone'];
   if (projectSheet.getLastRow() === 0) {
     projectSheet.appendRow(projectHeaders);
   } else {
-    projectSheet.getRange(1, 1, 1, 13).setValues([projectHeaders]);
+    projectSheet.getRange(1, 1, 1, 14).setValues([projectHeaders]);
   }
 
   // Setup Meetings Sheet
