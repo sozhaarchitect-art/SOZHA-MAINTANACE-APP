@@ -71,6 +71,11 @@
                         Sync
                     </button>
                 </div>
+                <button class="secondary" onclick="startAICall()" title="AI Voice Assistant"
+                    style="border-color: #9c27b0; color: #9c27b0;">
+                    <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
+                    AI Assistant
+                </button>
                 <button id="addProjectBtn" class="primary-btn">
                     <span class="iconify" data-icon="material-symbols:add"></span>
                     Add New Project
@@ -82,6 +87,11 @@
                 <a href="brochure.html" class="secondary" style="text-decoration: none;" target="_blank">
                     <span class="iconify" data-icon="material-symbols:book-2-outline"></span>
                     Brochure
+                </a>
+                <a href="payment.html" class="secondary"
+                    style="text-decoration: none; border-color: #4CAF50; color: #4CAF50;" target="_blank">
+                    <span class="iconify" data-icon="material-symbols:payments-outline"></span>
+                    Scan & Pay
                 </a>
             </div>
         </header>
@@ -138,8 +148,12 @@
                     <textarea id="notes" rows="3" placeholder="Recent maintenance details..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Design Images Link (e.g. Google Drive/Image URL)</label>
-                    <input type="text" id="designUrl" placeholder="Link to project designs...">
+                    <label>Design Images (Comma-separated URLs)</label>
+                    <input type="text" id="designUrl" placeholder="Link1, Link2, Link3...">
+                </div>
+                <div class="form-group">
+                    <label>Project Video URL (YouTube/Direct Link)</label>
+                    <input type="text" id="videoUrl" placeholder="https://youtube.com/watch?v=...">
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit">Save Project</button>
@@ -401,6 +415,35 @@
                 <span class="iconify" data-icon="material-symbols:content-copy"></span>
                 Copy Result
             </button>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- AI Voice Modal -->
+    <div id="voiceModal" class="modal">
+        <div class="card voice-card">
+            <div class="voice-header">
+                <div class="ai-avatar">
+                    <div class="pulse-ring"></div>
+                    <span class="iconify" data-icon="material-symbols:robot-2-outline"></span>
+                </div>
+                <h3>Sozha AI Assistant</h3>
+                <p id="voiceStatus">Ready to help</p>
+            </div>
+
+            <div class="language-selection">
+                <button class="lang-btn" onclick="setVoiceLang('en-US')">Talk in English</button>
+                <button class="lang-btn" onclick="setVoiceLang('ta-IN')">தமிழில் பேச</button>
+            </div>
+
+            <div class="voice-controls">
+                <button class="end-call-btn" onclick="endAICall()">
+                    <span class="iconify" data-icon="material-symbols:call-end"></span>
+                </button>
+            </div>
         </div>
     </div>
 

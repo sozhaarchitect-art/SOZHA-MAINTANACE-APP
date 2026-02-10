@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment | SOZHA ARCHITECTS</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <style>
+        .payment-card {
+            max-width: 500px;
+            margin: 4rem auto;
+            text-align: center;
+            padding: 3rem;
+            position: relative;
+        }
+
+        .qr-frame {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 2rem 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .payment-info {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-top: 2rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        @media print {
+
+            .liquid-bg,
+            .btn-group {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            .payment-card {
+                margin: 0;
+                box-shadow: none;
+                border: none;
+                background: white !important;
+                max-width: 100%;
+            }
+
+            .info-value {
+                color: black !important;
+            }
+
+            .qr-frame {
+                box-shadow: none;
+                border: 2px solid #eee;
+            }
+        }
+    </style>
+</head>
+
+<body class="admin-view">
+    <div class="liquid-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"
+            style="background: radial-gradient(circle, rgba(76, 175, 80, 0.3) 0%, transparent 70%);"></div>
+    </div>
+
+    <div class="container">
+        <div class="payment-card card">
+            <div class="logo" style="margin-bottom: 0.5rem;">SOZHA</div>
+            <h2 style="color: var(--success); letter-spacing: 2px; font-size: 1.2rem;">SECURE SCAN & PAY</h2>
+
+            <div class="qr-frame">
+                <div id="paymentQr"></div>
+            </div>
+
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Scan the QR code using any UPI App (GPay,
+                PhonePe, Paytm, etc.)</p>
+
+            <div class="payment-info">
+                <div class="info-row">
+                    <span class="info-label">UPI ID</span>
+                    <span class="info-value">sozhaarchitects@ybl</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Account Name</span>
+                    <span class="info-value">Sozha Architecture</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Bank Name</span>
+                    <span class="info-value">HDFC Bank</span>
+                </div>
+            </div>
+
+            <div class="btn-group" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button onclick="window.print()" style="flex: 1; background: var(--success); color: white;">
+                    <span class="iconify" data-icon="material-symbols:print-outline"></span>
+                    Print QR
+                </button>
+                <button class="secondary" onclick="window.close()" style="flex: 1;">
+                    Close Window
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = () => {
+            const upiUri = `upi://pay?pa=sozhaarchitects@ybl&pn=Sozha%20Architecture&cu=INR&tn=Project%20Payment`;
+            new QRCode(document.getElementById('paymentQr'), {
+                text: upiUri,
+                width: 250,
+                height: 250,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        };
+    </script>
+</body>
+
+</html>

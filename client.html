@@ -10,6 +10,97 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <style>
+        .reveal-anim {
+            animation: revealDesign 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes revealDesign {
+            0% {
+                clip-path: circle(0% at 50% 50%);
+                filter: brightness(0);
+            }
+
+            100% {
+                clip-path: circle(150% at 50% 50%);
+                filter: brightness(1);
+            }
+        }
+
+        .refresh-btn {
+            background: var(--success);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .refresh-btn .spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .design-gallery {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            scroll-snap-type: x mandatory;
+        }
+
+        .gallery-item {
+            flex: 0 0 calc(100% - 2rem);
+            height: 350px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 12px;
+            border: 2px solid var(--accent-color);
+            scroll-snap-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(0.98);
+        }
+
+        .video-container {
+            margin-top: 2rem;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 16/9;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .video-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
 </head>
 
 <body class="client-view">
@@ -34,7 +125,12 @@
                 <h1 id="cProjName" style="margin-bottom: 0.5rem;">Project Name</h1>
                 <div id="cStatusBadge" class="status-badge" style="display: inline-block; margin-bottom: 2rem;">Active
                 </div>
-                <div style="float: right; margin-top: -10px;">
+                <div style="float: right; margin-top: -10px; display: flex; gap: 0.5rem;">
+                    <button class="secondary" onclick="startAICall()"
+                        style="padding: 0.5rem 1rem; font-size: 0.8rem; border-color: #9c27b0; color: #9c27b0;">
+                        <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
+                        AI Assistant
+                    </button>
                     <a href="brochure.html" class="secondary"
                         style="text-decoration: none; padding: 0.5rem 1rem; font-size: 0.8rem;" target="_blank">
                         <span class="iconify" data-icon="material-symbols:book-2-outline"></span>
@@ -111,17 +207,26 @@
                             <a id="upiLink" href="#" class="btn"
                                 style="background: var(--accent-color); color: black; text-decoration: none; padding: 0.8rem 1.5rem; border-radius: 6px; font-weight: 700;">PAY
                                 VIA UPI</a>
+
+                            <button id="refreshPaymentBtn" class="refresh-btn" onclick="fetchProject()">
+                                <span class="iconify" data-icon="material-symbols:refresh"></span>
+                                Check Payment Status
+                            </button>
                         </div>
                     </div>
 
                     <div id="unlockedDesign" style="display: none;">
-                        <a id="designDownload" href="#" target="_blank" style="text-decoration: none;">
-                            <div id="designPreview"
-                                style="height: 300px; background-size: cover; background-position: center; border-radius: 12px; border: 2px solid var(--accent-color);">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-color);">Design Gallery</h4>
+                        <div id="designGallery" class="design-gallery">
+                            <!-- Images will be injected here -->
+                        </div>
+
+                        <div id="videoSection" style="display: none; margin-top: 2rem;">
+                            <h4 style="margin-bottom: 1rem; color: var(--accent-color);">Project Walkthrough Video</h4>
+                            <div class="video-container" id="videoContainer">
+                                <!-- Video player will be injected here -->
                             </div>
-                            <button class="secondary" style="width: 100%; margin-top: 1rem;">View Full Resolution
-                                Design</button>
-                        </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -133,6 +238,31 @@
 
         <div style="text-align: center; margin-top: 2rem;">
             <p style="font-size: 0.8rem; color: var(--text-secondary);">© 2026 SOZHA ARCHITECTS</p>
+        </div>
+    </div>
+
+    <!-- AI Voice Modal -->
+    <div id="voiceModal" class="modal">
+        <div class="card voice-card">
+            <div class="voice-header" style="margin-bottom: 2rem;">
+                <div class="ai-avatar">
+                    <div class="pulse-ring"></div>
+                    <span class="iconify" data-icon="material-symbols:robot-2-outline"></span>
+                </div>
+                <h3>Sozha AI Assistant</h3>
+                <p id="voiceStatus">Ready to help</p>
+            </div>
+
+            <div class="language-selection">
+                <button class="lang-btn" onclick="setVoiceLang('en-US')">Talk in English</button>
+                <button class="lang-btn" onclick="setVoiceLang('ta-IN')">தமிழில் பேச</button>
+            </div>
+
+            <div class="voice-controls">
+                <button class="end-call-btn" onclick="endAICall()">
+                    <span class="iconify" data-icon="material-symbols:call-end"></span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -186,20 +316,101 @@
             document.getElementById('cLastUpdate').textContent = proj.lastUpdate || "Recently";
 
             // Handle Design Section
-            if (proj.designUrl) {
+            if (proj.designUrl || proj.videoUrl) {
                 document.getElementById('designSection').style.display = 'block';
                 if (balance > 0) {
                     document.getElementById('lockedDesign').style.display = 'block';
                     document.getElementById('unlockedDesign').style.display = 'none';
+                    if (proj.designUrl) {
+                        const firstImg = proj.designUrl.split(',')[0].trim();
+                        document.getElementById('designBlur').style.backgroundImage = `url('${firstImg}')`;
+                        document.getElementById('designBlur').style.backgroundSize = 'cover';
+                    }
                     generateUPI(proj, balance);
                 } else {
+                    const unlockedEl = document.getElementById('unlockedDesign');
+                    const wasLocked = document.getElementById('lockedDesign').style.display !== 'none';
+
                     document.getElementById('lockedDesign').style.display = 'none';
-                    document.getElementById('unlockedDesign').style.display = 'block';
-                    document.getElementById('designPreview').style.backgroundImage = `url('${proj.designUrl}')`;
-                    document.getElementById('designDownload').href = proj.designUrl;
+                    unlockedEl.style.display = 'block';
+
+                    // Render Image Gallery
+                    const gallery = document.getElementById('designGallery');
+                    gallery.innerHTML = '';
+                    if (proj.designUrl) {
+                        const images = proj.designUrl.split(',').map(url => url.trim());
+                        images.forEach(img => {
+                            const item = document.createElement('div');
+                            item.className = 'gallery-item';
+                            item.style.backgroundImage = `url('${img}')`;
+                            item.onclick = () => window.open(img, '_blank');
+                            gallery.appendChild(item);
+                        });
+                    }
+
+                    // Render Video if exists
+                    const videoSec = document.getElementById('videoSection');
+                    const videoCont = document.getElementById('videoContainer');
+                    if (proj.videoUrl) {
+                        videoSec.style.display = 'block';
+                        videoCont.innerHTML = renderVideoPlayer(proj.videoUrl);
+                    } else {
+                        videoSec.style.display = 'none';
+                    }
+
+                    if (wasLocked) {
+                        unlockedEl.classList.add('reveal-anim');
+                        showNotification('Design Unlocked! 🎉');
+                    }
                 }
             }
         }
+
+        function renderVideoPlayer(url) {
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                let id = '';
+                if (url.includes('v=')) id = url.split('v=')[1].split('&')[0];
+                else id = url.split('/').pop();
+                return `<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`;
+            } else {
+                return `<video controls style="width:100%; height:100%;"><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video>`;
+            }
+        }
+
+        function showNotification(msg) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 2rem;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 1rem 2rem;
+                background: var(--success);
+                color: white;
+                border-radius: 50px;
+                font-weight: 700;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                z-index: 9999;
+                animation: toastSlide 0.5s ease forwards;
+            `;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 5000);
+        }
+
+        // Add CSS for toast
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes toastSlide {
+                from { top: -50px; opacity: 0; }
+                to { top: 2rem; opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
 
         function generateUPI(proj, balance) {
             const upiId = "sozhaarchitect@okaxis"; // You can make this dynamic later
@@ -222,6 +433,93 @@
         }
 
         if (projectId) fetchProject();
+
+        // AI VOICE ASSISTANT LOGIC
+        let activeVoiceLang = 'en-US';
+        let currentProjectData = null;
+
+        function startAICall() {
+            const modal = document.getElementById('voiceModal');
+            modal.style.display = 'flex';
+            document.getElementById('voiceStatus').textContent = 'Waiting for language selection...';
+        }
+
+        function endAICall() {
+            window.speechSynthesis.cancel();
+            document.getElementById('voiceModal').style.display = 'none';
+        }
+
+        function setVoiceLang(lang) {
+            activeVoiceLang = lang;
+
+            // UI Feedback
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.onclick.toString().includes(lang));
+            });
+
+            const status = document.getElementById('voiceStatus');
+            if (lang === 'en-US') {
+                status.textContent = 'English interface active';
+                if (currentProjectData) {
+                    readClientReport(currentProjectData, 'en-US');
+                } else {
+                    speak("Hello! I am your Sozha AI Assistant. I can read your project status. How can I help?", 'en-US');
+                }
+            } else {
+                status.textContent = 'தமிழ் இடைமுகம் செயலில் உள்ளது';
+                if (currentProjectData) {
+                    readClientReport(currentProjectData, 'ta-IN');
+                } else {
+                    speak("வணக்கம்! நான் உங்கள் சோழா ஏ ஐ உதவியாளர். உங்களது திட்டத்தின் நிலையை என்னால் கூற முடியும். நான் உங்களுக்கு எவ்வாறு உதவட்டும்?", 'ta-IN');
+                }
+            }
+        }
+
+        function speak(text, lang) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang || activeVoiceLang;
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+
+            utterance.onstart = () => {
+                document.getElementById('voiceStatus').textContent = 'Speaking...';
+                document.querySelector('.pulse-ring').style.display = 'block';
+            };
+
+            utterance.onend = () => {
+                document.getElementById('voiceStatus').textContent = lang === 'ta-IN' ? 'கேட்டுக் கொண்டிருக்கிறேன்...' : 'Ready...';
+                document.querySelector('.pulse-ring').style.display = 'none';
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function readClientReport(proj, lang) {
+            const balance = (proj.totalCost || 0) - (proj.paidAmount || 0);
+            if (lang === 'ta-IN') {
+                const msg = `வணக்கம் ${proj.client}. உங்கள் திட்டத்தின் பெயர்: ${proj.name}. 
+                            தற்போதைய நிலை: ${proj.status}. 
+                            வேலை நிலை: ${proj.currentStage || 'தொடர்கிறது'}. 
+                            மீதமுள்ள தொகை: ரூபாய் ${balance.toLocaleString()}. 
+                            நன்றி.`;
+                speak(msg, 'ta-IN');
+            } else {
+                const msg = `Hello ${proj.client}. Here is your project report for ${proj.name}. 
+                            The status is ${proj.status}. 
+                            Current stage is ${proj.currentStage || 'Ongoing'}. 
+                            The balance amount due is ${balance.toLocaleString()} rupees. 
+                            Thank you.`;
+                speak(msg, 'en-US');
+            }
+        }
+
+        // Update displayProject to store current data
+        const originalDisplayProject = displayProject;
+        displayProject = function (proj) {
+            currentProjectData = proj;
+            originalDisplayProject(proj);
+        };
     </script>
 </body>
 

@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
         meetingForm.addEventListener('submit', handleMeetingSubmit);
     }
 
+
+
     const addBtn = document.getElementById('addProjectBtn');
     if (addBtn) {
         addBtn.onclick = toggleForm;
@@ -187,6 +189,7 @@ async function handleFormSubmit(e) {
         status: document.getElementById('status').value,
         notes: document.getElementById('notes').value,
         designUrl: document.getElementById('designUrl').value,
+        videoUrl: document.getElementById('videoUrl').value,
         lastUpdate: new Date().toLocaleDateString()
     };
 
@@ -347,6 +350,9 @@ function renderProjects() {
 
             <div class="card-actions">
                 <div class="action-buttons" style="display: flex; gap: 0.6rem; width: 100%; justify-content: space-between;">
+                    <button class="secondary icon-btn read-voice-btn" title="Read Status" onclick="readProjectStatus('${p.id}')">
+                        <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
+                    </button>
                     <button class="secondary icon-btn" title="Edit" onclick="editProject('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:edit-outline"></span>
                     </button>
@@ -419,6 +425,7 @@ function editProject(id) {
     document.getElementById('status').value = project.status;
     document.getElementById('notes').value = project.notes;
     document.getElementById('designUrl').value = project.designUrl || '';
+    document.getElementById('videoUrl').value = project.videoUrl || '';
 
     document.getElementById('formTitle').textContent = 'Edit Project: ' + project.name;
 
@@ -1003,4 +1010,83 @@ function formatFeetInches(decimalFeet) {
     }
 
     return (decimalFeet < 0 ? '-' : '') + feet + "' " + inches + fractionStr;
+}
+
+// AI VOICE ASSISTANT LOGIC
+let activeVoiceLang = 'en-US';
+
+function startAICall() {
+    const modal = document.getElementById('voiceModal');
+    modal.style.display = 'flex';
+    document.getElementById('voiceStatus').textContent = 'Waiting for language selection...';
+}
+
+function endAICall() {
+    window.speechSynthesis.cancel();
+    document.getElementById('voiceModal').style.display = 'none';
+}
+
+function setVoiceLang(lang) {
+    activeVoiceLang = lang;
+
+    // UI Feedback
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.onclick.toString().includes(lang));
+    });
+
+    const status = document.getElementById('voiceStatus');
+    if (lang === 'en-US') {
+        status.textContent = 'English interface active';
+        speak("Hello! I am your Sozha AI Assistant. I can read project statuses for you. How can I help?", 'en-US');
+    } else {
+        status.textContent = 'தமிழ் இடைமுகம் செயலில் உள்ளது';
+        speak("வணக்கம்! நான் உங்கள் சோழா ஏ ஐ உதவியாளர். உங்களது திட்டங்களின் நிலையை என்னால் கூற முடியும். நான் உங்களுக்கு எவ்வாறு உதவட்டும்?", 'ta-IN');
+    }
+}
+
+function speak(text, lang) {
+    window.speechSynthesis.cancel(); // Stop current speech
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang || activeVoiceLang;
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => {
+        document.getElementById('voiceStatus').textContent = 'Speaking...';
+        document.querySelector('.pulse-ring').style.display = 'block';
+    };
+
+    utterance.onend = () => {
+        document.getElementById('voiceStatus').textContent = lang === 'ta-IN' ? 'கேட்டுக் கொண்டிருக்கிறேன்...' : 'Ready...';
+        document.querySelector('.pulse-ring').style.display = 'none';
+    };
+
+    window.speechSynthesis.speak(utterance);
+}
+
+function readProjectStatus(projectId) {
+    const project = projects.find(p => String(p.id) === String(projectId));
+    if (!project) return;
+
+    startAICall();
+
+    // Brief delay to ensure modal is visible
+    setTimeout(() => {
+        if (activeVoiceLang === 'ta-IN') {
+            const balance = project.totalCost - project.paidAmount;
+            const msg = `திட்டத்தின் பெயர்: ${project.name}. 
+                        தற்போதைய நிலை: ${project.status}. 
+                        வேலை நிலை: ${project.currentStage}. 
+                        மீதமுள்ள தொகை: ரூபாய் ${balance.toLocaleString()}.`;
+            speak(msg, 'ta-IN');
+        } else {
+            const balance = project.totalCost - project.paidAmount;
+            const msg = `Project report for ${project.name}. 
+                        The status is ${project.status}. 
+                        Current stage is ${project.currentStage}. 
+                        The balance amount due is ${balance.toLocaleString()} rupees.`;
+            speak(msg, 'en-US');
+        }
+    }, 500);
 }
