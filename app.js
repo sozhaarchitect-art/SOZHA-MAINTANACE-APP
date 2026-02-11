@@ -1021,6 +1021,115 @@ function formatFeetInches(decimalFeet) {
 
 // AI VOICE ASSISTANT LOGIC
 let activeVoiceLang = 'en-US';
+let recognition = null;
+
+// Initialize Speech Recognition
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+        document.getElementById('voiceStatus').textContent = activeVoiceLang === 'ta-IN' ? 'கேட்டுக் கொண்டிருக்கிறேன்...' : 'Listening...';
+        const ring = document.querySelector('.pulse-ring');
+        if (ring) {
+            ring.style.display = 'block';
+            ring.style.background = 'rgba(76, 175, 80, 0.4)';
+        }
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        document.getElementById('voiceStatus').textContent = 'Microphone error: ' + event.error;
+    };
+
+    recognition.onend = () => {
+        const ring = document.querySelector('.pulse-ring');
+        if (ring) ring.style.display = 'none';
+        if (document.getElementById('voiceModal').style.display === 'flex') {
+            document.getElementById('voiceStatus').textContent = activeVoiceLang === 'ta-IN' ? 'கேக்கத் தயார்' : 'Ready to listen';
+        }
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        console.log('Recognized text:', transcript);
+        handleVoiceQuery(transcript);
+    };
+}
+
+function startListening() {
+    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+        alert('Microphone access requires a secure connection (HTTPS). Please ensure you are using HTTPS.');
+        return;
+    }
+
+    if (recognition) {
+        try {
+            recognition.lang = activeVoiceLang;
+            recognition.start();
+        } catch (e) {
+            console.warn('Recognition already started');
+        }
+    } else {
+        alert('Speech recognition is not supported in this browser. Please use Chrome.');
+    }
+}
+
+function handleVoiceQuery(text) {
+    const balanceKeywordsEn = ['balance', 'amount', 'due', 'how much', 'rupees', 'money', 'pending', 'cost'];
+    const balanceKeywordsTa = ['மீதமுள்ள', 'தொகை', 'பணம்', 'விலை', 'எவ்வளவு', 'ரூபாய்', 'பாக்கி'];
+
+    const isBalanceQuery = balanceKeywordsEn.some(k => text.includes(k)) ||
+        balanceKeywordsTa.some(k => text.includes(k));
+
+    // Try to find project name in text
+    let targetProject = null;
+    projects.forEach(p => {
+        const nameClean = p.name.toLowerCase();
+        if (text.includes(nameClean)) {
+            targetProject = p;
+        }
+    });
+
+    if (isBalanceQuery) {
+        if (targetProject) {
+            readDetailedReport(targetProject, activeVoiceLang);
+        } else {
+            // If no project mentioned but query is about balance, maybe ask which one?
+            // Or if only one project exists, use that.
+            if (projects.length === 1) {
+                readDetailedReport(projects[0], activeVoiceLang);
+            } else {
+                const msg = activeVoiceLang === 'ta-IN' ?
+                    "எந்த திட்டத்தின் நிலையை நீங்கள் தெரிந்து கொள்ள விரும்புகிறீர்கள்?" :
+                    "Which project's balance would you like to know?";
+                speak(msg);
+            }
+        }
+    } else {
+        const msg = activeVoiceLang === 'ta-IN' ?
+            "மன்னிக்கவும், எனக்கு புரியவில்லை. திட்டத்தின் பெயர் மற்றும் மீதமுள்ள தொகையை கேட்கலாம்." :
+            "I can help with project balance and stage. Please mention the project name.";
+        speak(msg);
+    }
+}
+
+function readDetailedReport(proj, lang) {
+    const balance = proj.totalCost - proj.paidAmount;
+    const stage = proj.currentStage || 'starting';
+
+    if (lang === 'ta-IN') {
+        const msg = `${proj.name} திட்டம் தற்போது ${stage} நிலையில் உள்ளது. 
+                    மீதமுள்ள தொகை ரூபாய் ${balance.toLocaleString()} ஆகும்.`;
+        speak(msg, 'ta-IN');
+    } else {
+        const msg = `${proj.name} project is in ${stage} stage. 
+                    Remaining balance is ${balance.toLocaleString()} rupees.`;
+        speak(msg, 'en-US');
+    }
+}
 
 function startAICall() {
     const modal = document.getElementById('voiceModal');
@@ -1038,17 +1147,23 @@ function setVoiceLang(lang) {
 
     // UI Feedback
     document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.onclick.toString().includes(lang));
+        const clickAttr = btn.getAttribute('onclick');
+        if (clickAttr && clickAttr.includes(lang)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
     });
 
     const status = document.getElementById('voiceStatus');
     if (lang === 'en-US') {
-        status.textContent = 'English interface active';
-        speak("Hello! I am your Sozha AI Assistant. I can read project statuses for you. How can I help?", 'en-US');
+        status.textContent = 'Listening...';
     } else {
-        status.textContent = 'தமிழ் இடைமுகம் செயலில் உள்ளது';
-        speak("வணக்கம்! நான் உங்கள் சோழா ஏ ஐ உதவியாளர். உங்களது திட்டங்களின் நிலையை என்னால் கூற முடியும். நான் உங்களுக்கு எவ்வாறு உதவட்டும்?", 'ta-IN');
+        status.textContent = 'கேட்டுக் கொண்டிருக்கிறேன்...';
     }
+
+    // Start listening immediately
+    startListening();
 }
 
 function speak(text, lang) {
@@ -1061,12 +1176,21 @@ function speak(text, lang) {
 
     utterance.onstart = () => {
         document.getElementById('voiceStatus').textContent = 'Speaking...';
-        document.querySelector('.pulse-ring').style.display = 'block';
+        const ring = document.querySelector('.pulse-ring');
+        if (ring) ring.style.display = 'block';
     };
 
     utterance.onend = () => {
-        document.getElementById('voiceStatus').textContent = lang === 'ta-IN' ? 'கேட்டுக் கொண்டிருக்கிறேன்...' : 'Ready...';
-        document.querySelector('.pulse-ring').style.display = 'none';
+        document.getElementById('voiceStatus').textContent = lang === 'ta-IN' ? 'கேக்கத் தயார்' : 'Ready to listen';
+        const ring = document.querySelector('.pulse-ring');
+        if (ring) ring.style.display = 'none';
+
+        // Auto-listen again
+        setTimeout(() => {
+            if (document.getElementById('voiceModal').style.display === 'flex') {
+                startListening();
+            }
+        }, 500);
     };
 
     window.speechSynthesis.speak(utterance);
@@ -1080,21 +1204,7 @@ function readProjectStatus(projectId) {
 
     // Brief delay to ensure modal is visible
     setTimeout(() => {
-        if (activeVoiceLang === 'ta-IN') {
-            const balance = project.totalCost - project.paidAmount;
-            const msg = `திட்டத்தின் பெயர்: ${project.name}. 
-                        தற்போதைய நிலை: ${project.status}. 
-                        வேலை நிலை: ${project.currentStage}. 
-                        மீதமுள்ள தொகை: ரூபாய் ${balance.toLocaleString()}.`;
-            speak(msg, 'ta-IN');
-        } else {
-            const balance = project.totalCost - project.paidAmount;
-            const msg = `Project report for ${project.name}. 
-                        The status is ${project.status}. 
-                        Current stage is ${project.currentStage}. 
-                        The balance amount due is ${balance.toLocaleString()} rupees.`;
-            speak(msg, 'en-US');
-        }
+        readDetailedReport(project, activeVoiceLang);
     }, 500);
 }
 

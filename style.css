@@ -169,16 +169,37 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 2.5rem 0;
-    margin-bottom: 3.5rem;
+    padding: 1.5rem 0;
+    margin-bottom: 2.5rem;
     position: relative;
     border-bottom: 1px solid var(--border-color);
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-grow: 1;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.search-tools-group,
+.main-actions-group,
+.quick-links-group {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
 }
 
 .brand-group {
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    flex-shrink: 0;
 }
 
 .brand-divider {
@@ -193,25 +214,65 @@ header {
 }
 
 .title {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 800;
-    letter-spacing: 0.15rem;
+    letter-spacing: 0.12rem;
     color: var(--text-primary);
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .status-indicator {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: var(--success);
     font-weight: 700;
     letter-spacing: 0.05rem;
-    margin-top: 2px;
+    margin-top: 1px;
+}
+
+.ai-btn {
+    border-color: #9c27b0 !important;
+    color: #9c27b0 !important;
+}
+
+.ai-btn:hover {
+    background: rgba(156, 39, 176, 0.1) !important;
+    transform: scale(1.05) translateY(-2px);
+}
+
+.link-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: var(--transition);
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(5px);
+}
+
+.link-item:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.pay-link {
+    border-color: #4CAF50 !important;
+    color: #4CAF50 !important;
+}
+
+.pay-link:hover {
+    background: rgba(76, 175, 80, 0.1) !important;
 }
 
 .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
+    display: none;
+    /* Removed in favor of header-content */
 }
 
 .action-buttons-group {
@@ -933,7 +994,7 @@ textarea:focus {
 @media (max-width: 768px) {
     header {
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 2rem;
         padding: 2.5rem 1rem;
         text-align: center;
         align-items: center;
@@ -943,7 +1004,7 @@ textarea:focus {
         width: 100%;
         flex-direction: column;
         justify-content: center;
-        gap: 0.5rem;
+        gap: 0.8rem;
     }
 
     .brand-divider {
@@ -951,7 +1012,7 @@ textarea:focus {
     }
 
     .logo {
-        font-size: 2rem;
+        font-size: 2.4rem;
         margin-bottom: 0.2rem;
     }
 
@@ -961,34 +1022,39 @@ textarea:focus {
     }
 
     .title {
-        font-size: 0.85rem;
-        letter-spacing: 0.1rem;
+        font-size: 0.9rem;
+        letter-spacing: 0.15rem;
     }
 
-    .header-actions {
+    .header-content {
         width: 100%;
         flex-direction: column;
-        gap: 1.2rem;
+        gap: 1.5rem;
         align-items: center;
+        justify-content: center;
     }
 
-    .action-buttons-group {
+    .search-tools-group,
+    .main-actions-group,
+    .quick-links-group {
         width: 100%;
         justify-content: center;
-        gap: 1rem;
-        flex-wrap: nowrap;
+        gap: 0.8rem;
+        flex-wrap: wrap;
     }
 
     .search-container {
         max-width: 100%;
         width: 100%;
-        margin-top: 0.5rem;
+    }
+
+    .action-buttons-group {
+        gap: 0.8rem;
     }
 
     #addProjectBtn {
         width: 100%;
         justify-content: center;
-        margin-top: 0.5rem;
     }
 
     .meeting-alert {
@@ -1240,4 +1306,86 @@ textarea:focus {
     background: rgba(156, 39, 176, 0.1) !important;
     border-color: #9c27b0 !important;
     transform: scale(1.1) !important;
+}
+
+/* AI Voice Assistant Styles */
+.voice-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.ai-avatar {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    background: rgba(197, 160, 89, 0.1);
+    border: 2px solid var(--accent-color);
+    border-radius: 50%;
+    margin: 0 auto 1rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ai-avatar .iconify {
+    font-size: 2.5rem;
+    color: var(--accent-color);
+}
+
+.pulse-ring {
+    content: '';
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    animation: pulsar 2s infinite;
+    display: none;
+    background: rgba(197, 160, 89, 0.3);
+}
+
+@keyframes pulsar {
+    0% {
+        width: 80px;
+        height: 80px;
+        opacity: 0.8;
+    }
+
+    100% {
+        width: 140px;
+        height: 140px;
+        opacity: 0;
+    }
+}
+
+.language-selection {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+
+.lang-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--text-primary) !important;
+    padding: 1rem !important;
+    min-width: unset !important;
+}
+
+.lang-btn.active {
+    background: var(--accent-color) !important;
+    color: black !important;
+    border-color: var(--accent-color) !important;
+}
+
+.voice-controls {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: center;
 }

@@ -51,48 +51,56 @@
                     <div id="networkStatus" class="status-indicator">● Online</div>
                 </div>
             </div>
-            <div class="header-actions">
-                <div class="search-container" id="searchContainer">
-                    <input type="text" id="projectSearch" placeholder="Search..." oninput="handleSearch(this.value)">
-                    <button class="secondary icon-btn"
-                        onclick="handleSearch(document.getElementById('projectSearch').value)" title="Search">
-                        <span class="iconify" data-icon="material-symbols:search"></span>
+
+            <div class="header-content">
+                <div class="search-tools-group">
+                    <div class="search-container" id="searchContainer">
+                        <input type="text" id="projectSearch" placeholder="Search..."
+                            oninput="handleSearch(this.value)">
+                        <button class="secondary icon-btn"
+                            onclick="handleSearch(document.getElementById('projectSearch').value)" title="Search">
+                            <span class="iconify" data-icon="material-symbols:search"></span>
+                        </button>
+                    </div>
+                    <div class="action-buttons-group">
+                        <button class="secondary icon-btn" onclick="updateScriptUrl()" title="Settings">
+                            <span class="iconify" data-icon="material-symbols:settings-outline"></span>
+                        </button>
+                        <button class="secondary icon-btn" onclick="openInstallGuide()" title="Installation Guide">
+                            <span class="iconify" data-icon="material-symbols:help-outline"></span>
+                        </button>
+                        <button class="secondary" id="syncBtn" onclick="fetchProjects(true)" title="Sync from Cloud">
+                            <span class="iconify" data-icon="material-symbols:cloud-sync-outline"></span>
+                            Sync
+                        </button>
+                    </div>
+                </div>
+
+                <div class="main-actions-group">
+                    <button class="secondary ai-btn" onclick="startAICall()" title="AI Voice Assistant">
+                        <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
+                        AI Assistant
+                    </button>
+                    <button id="addProjectBtn" class="primary-btn">
+                        <span class="iconify" data-icon="material-symbols:add"></span>
+                        Add New Project
+                    </button>
+                    <button class="secondary" onclick="openConverterModal()" title="Unit Converter">
+                        <span class="iconify" data-icon="material-symbols:straighten-outline"></span>
+                        Converter
                     </button>
                 </div>
-                <div class="action-buttons-group">
-                    <button class="secondary icon-btn" onclick="updateScriptUrl()" title="Settings">
-                        <span class="iconify" data-icon="material-symbols:settings-outline"></span>
-                    </button>
-                    <button class="secondary icon-btn" onclick="openInstallGuide()" title="Installation Guide">
-                        <span class="iconify" data-icon="material-symbols:help-outline"></span>
-                    </button>
-                    <button class="secondary" id="syncBtn" onclick="fetchProjects(true)" title="Sync from Cloud">
-                        <span class="iconify" data-icon="material-symbols:cloud-sync-outline"></span>
-                        Sync
-                    </button>
+
+                <div class="quick-links-group">
+                    <a href="brochure.html" class="link-item" target="_blank">
+                        <span class="iconify" data-icon="material-symbols:book-2-outline"></span>
+                        Brochure
+                    </a>
+                    <a href="payment.html" class="link-item pay-link" target="_blank">
+                        <span class="iconify" data-icon="material-symbols:payments-outline"></span>
+                        Scan & Pay
+                    </a>
                 </div>
-                <button class="secondary" onclick="startAICall()" title="AI Voice Assistant"
-                    style="border-color: #9c27b0; color: #9c27b0;">
-                    <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
-                    AI Assistant
-                </button>
-                <button id="addProjectBtn" class="primary-btn">
-                    <span class="iconify" data-icon="material-symbols:add"></span>
-                    Add New Project
-                </button>
-                <button class="secondary" onclick="openConverterModal()" title="Unit Converter">
-                    <span class="iconify" data-icon="material-symbols:straighten-outline"></span>
-                    Converter
-                </button>
-                <a href="brochure.html" class="secondary" style="text-decoration: none;" target="_blank">
-                    <span class="iconify" data-icon="material-symbols:book-2-outline"></span>
-                    Brochure
-                </a>
-                <a href="payment.html" class="secondary"
-                    style="text-decoration: none; border-color: #4CAF50; color: #4CAF50;" target="_blank">
-                    <span class="iconify" data-icon="material-symbols:payments-outline"></span>
-                    Scan & Pay
-                </a>
             </div>
         </header>
 
@@ -429,12 +437,12 @@
     <!-- AI Voice Modal -->
     <div id="voiceModal" class="modal">
         <div class="card voice-card">
-            <div class="voice-header">
+            <div class="voice-header" style="margin-bottom: 2rem;">
                 <div class="ai-avatar">
                     <div class="pulse-ring"></div>
                     <span class="iconify" data-icon="material-symbols:robot-2-outline"></span>
                 </div>
-                <h3>Sozha AI Assistant</h3>
+                <h3>Project Monitoring & Balance Assistant</h3>
                 <p id="voiceStatus">Ready to help</p>
             </div>
 
@@ -444,6 +452,10 @@
             </div>
 
             <div class="voice-controls">
+                <button class="lang-btn" onclick="startListening()"
+                    style="background: var(--accent-color); color: black;">
+                    Tap to Speak
+                </button>
                 <button class="end-call-btn" onclick="endAICall()">
                     <span class="iconify" data-icon="material-symbols:call-end"></span>
                 </button>

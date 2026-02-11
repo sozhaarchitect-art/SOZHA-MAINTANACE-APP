@@ -249,7 +249,7 @@
                     <div class="pulse-ring"></div>
                     <span class="iconify" data-icon="material-symbols:robot-2-outline"></span>
                 </div>
-                <h3>Sozha AI Assistant</h3>
+                <h3>Project Monitoring & Balance Assistant</h3>
                 <p id="voiceStatus">Ready to help</p>
             </div>
 
@@ -259,6 +259,10 @@
             </div>
 
             <div class="voice-controls">
+                <button class="lang-btn" onclick="startListening()"
+                    style="background: var(--accent-color); color: black;">
+                    Tap to Speak
+                </button>
                 <button class="end-call-btn" onclick="endAICall()">
                     <span class="iconify" data-icon="material-symbols:call-end"></span>
                 </button>
@@ -437,6 +441,76 @@
         // AI VOICE ASSISTANT LOGIC
         let activeVoiceLang = 'en-US';
         let currentProjectData = null;
+        let recognition = null;
+
+        // Initialize Speech Recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                document.getElementById('voiceStatus').textContent = activeVoiceLang === 'ta-IN' ? 'கேட்டுக் கொண்டிருக்கிறேன்...' : 'Listening...';
+                document.querySelector('.pulse-ring').style.display = 'block';
+                document.querySelector('.pulse-ring').style.background = 'rgba(76, 175, 80, 0.4)'; // Green for listening
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                document.getElementById('voiceStatus').textContent = 'Microphone error: ' + event.error;
+                document.querySelector('.pulse-ring').style.display = 'none';
+            };
+
+            recognition.onend = () => {
+                document.querySelector('.pulse-ring').style.display = 'none';
+                if (document.getElementById('voiceModal').style.display === 'flex') {
+                    document.getElementById('voiceStatus').textContent = activeVoiceLang === 'ta-IN' ? 'கேக்கத் தயார்' : 'Ready to listen';
+                }
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                console.log('Recognized text:', transcript);
+                handleVoiceQuery(transcript);
+            };
+        }
+
+        function startListening() {
+            if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+                alert('Microphone access requires a secure connection (HTTPS). Please ensure you are using HTTPS.');
+                return;
+            }
+
+            if (recognition) {
+                try {
+                    recognition.lang = activeVoiceLang;
+                    recognition.start();
+                } catch (e) {
+                    console.warn('Recognition already started');
+                }
+            } else {
+                alert('Speech recognition is not supported in this browser. Please use Chrome.');
+            }
+        }
+
+        function handleVoiceQuery(text) {
+            const balanceKeywordsEn = ['balance', 'amount', 'due', 'how much', 'rupees', 'money', 'pending'];
+            const balanceKeywordsTa = ['மீதமுள்ள', 'தொகை', 'பணம்', 'விலை', 'எவ்வளவு', 'ரூபாய்', 'பாக்கி'];
+
+            const isBalanceQuery = balanceKeywordsEn.some(k => text.includes(k)) ||
+                balanceKeywordsTa.some(k => text.includes(k));
+
+            if (isBalanceQuery && currentProjectData) {
+                readClientReport(currentProjectData, activeVoiceLang);
+            } else {
+                if (activeVoiceLang === 'ta-IN') {
+                    speak("மன்னிக்கவும், எனக்கு புரியவில்லை. நீங்கள் மீண்டும் ஒருமுறை கூற முடியுமா?", 'ta-IN');
+                } else {
+                    speak("I'm sorry, I didn't catch that. Could you please repeat? You can ask about your balance or project status.", 'en-US');
+                }
+            }
+        }
 
         function startAICall() {
             const modal = document.getElementById('voiceModal');
@@ -459,20 +533,13 @@
 
             const status = document.getElementById('voiceStatus');
             if (lang === 'en-US') {
-                status.textContent = 'English interface active';
-                if (currentProjectData) {
-                    readClientReport(currentProjectData, 'en-US');
-                } else {
-                    speak("Hello! I am your Sozha AI Assistant. I can read your project status. How can I help?", 'en-US');
-                }
+                status.textContent = 'Listening...';
             } else {
-                status.textContent = 'தமிழ் இடைமுகம் செயலில் உள்ளது';
-                if (currentProjectData) {
-                    readClientReport(currentProjectData, 'ta-IN');
-                } else {
-                    speak("வணக்கம்! நான் உங்கள் சோழா ஏ ஐ உதவியாளர். உங்களது திட்டத்தின் நிலையை என்னால் கூற முடியும். நான் உங்களுக்கு எவ்வாறு உதவட்டும்?", 'ta-IN');
-                }
+                status.textContent = 'கேட்டுக் கொண்டிருக்கிறேன்...';
             }
+
+            // Start listening immediately
+            startListening();
         }
 
         function speak(text, lang) {
@@ -488,8 +555,15 @@
             };
 
             utterance.onend = () => {
-                document.getElementById('voiceStatus').textContent = lang === 'ta-IN' ? 'கேட்டுக் கொண்டிருக்கிறேன்...' : 'Ready...';
+                document.getElementById('voiceStatus').textContent = lang === 'ta-IN' ? 'கேக்கத் தயார்' : 'Ready to listen';
                 document.querySelector('.pulse-ring').style.display = 'none';
+
+                // Automatically start listening after AI finishes speaking
+                setTimeout(() => {
+                    if (document.getElementById('voiceModal').style.display === 'flex') {
+                        startListening();
+                    }
+                }, 500);
             };
 
             window.speechSynthesis.speak(utterance);
@@ -497,18 +571,20 @@
 
         function readClientReport(proj, lang) {
             const balance = (proj.totalCost || 0) - (proj.paidAmount || 0);
+            const stage = proj.currentStage || 'starting';
+
             if (lang === 'ta-IN') {
-                const msg = `வணக்கம் ${proj.client}. உங்கள் திட்டத்தின் பெயர்: ${proj.name}. 
-                            தற்போதைய நிலை: ${proj.status}. 
-                            வேலை நிலை: ${proj.currentStage || 'தொடர்கிறது'}. 
-                            மீதமுள்ள தொகை: ரூபாய் ${balance.toLocaleString()}. 
+                const msg = `திட்டம் '${proj.name}' தற்போது ${stage} நிலையில் உள்ளது.
+                            மொத்த திட்ட மதிப்பு: ரூபாய் ${(proj.totalCost || 0).toLocaleString()}.
+                            இதுவரை செலுத்தப்பட்ட தொகை: ரூபாய் ${(proj.paidAmount || 0).toLocaleString()}.
+                            மீதமுள்ள பாக்கி தொகை: ரூபாய் ${balance.toLocaleString()}.
                             நன்றி.`;
                 speak(msg, 'ta-IN');
             } else {
-                const msg = `Hello ${proj.client}. Here is your project report for ${proj.name}. 
-                            The status is ${proj.status}. 
-                            Current stage is ${proj.currentStage || 'Ongoing'}. 
-                            The balance amount due is ${balance.toLocaleString()} rupees. 
+                const msg = `Project '${proj.name}' is currently in the ${stage} stage.
+                            Total project value is ${(proj.totalCost || 0).toLocaleString()} rupees.
+                            Amount paid till date is ${(proj.paidAmount || 0).toLocaleString()} rupees.
+                            Remaining project balance is ${balance.toLocaleString()} rupees.
                             Thank you.`;
                 speak(msg, 'en-US');
             }
