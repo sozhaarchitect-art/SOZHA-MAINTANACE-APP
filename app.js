@@ -6,7 +6,7 @@ let meetings = []; // New global for meetings
 let activeType = 'Design';
 let searchQuery = '';
 const scriptUrlKey = 'sozha_script_url';
-const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbwpEv1QUxfIDr1CfSanhONqZ5NJzDT4n4-Hj7N5tSNhsuJTIYxt9L6sTJdysbwIPoya/exec';
+const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbwTvAOOp-U_GV7U1xULsRcFI9ghXN5TOYHaKPe71kN6_vYZThB8Vpp2SSieTt_a9kVM/exec';
 let statusChart = null;
 let calendar = null; // New global for FullCalendar instance
 
@@ -352,7 +352,7 @@ function renderProjects() {
             </div>
 
             <div class="card-actions">
-                <div class="action-buttons" style="display: flex; gap: 0.6rem; width: 100%; justify-content: space-between;">
+                <div class="action-buttons" style="display: flex; gap: 0.4rem; justify-content: center; width: 100%;">
                     <button class="secondary icon-btn read-voice-btn" title="Read Status" onclick="readProjectStatus('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
                     </button>
@@ -1200,10 +1200,16 @@ function readProjectStatus(projectId) {
     const project = projects.find(p => String(p.id) === String(projectId));
     if (!project) return;
 
-    startAICall();
+    toggleAIChat();
+    const widget = document.getElementById('aiChatWidget');
+    if (!widget.classList.contains('active')) widget.classList.add('active');
 
     // Brief delay to ensure modal is visible
     setTimeout(() => {
+        const msg = activeVoiceLang === 'ta-IN' ?
+            `${project.name} குறித்து தகவல் கூறுகிறேன்.` :
+            `Let me tell you about ${project.name}.`;
+        appendMessage('ai', msg);
         readDetailedReport(project, activeVoiceLang);
     }, 500);
 }
@@ -1215,13 +1221,16 @@ function makeAICall(projectId) {
         return;
     }
 
-    startAICall();
+    toggleAIChat();
+    const widget = document.getElementById('aiChatWidget');
+    if (!widget.classList.contains('active')) widget.classList.add('active');
 
     setTimeout(() => {
         const msg = activeVoiceLang === 'ta-IN' ?
             `${project.name} குறித்து ${project.client}-ஐ அழைக்கத் தயார் செய்கிறேன்.` :
             `Preparing to call ${project.client} regarding project ${project.name}.`;
 
+        appendMessage('ai', msg);
         speak(msg);
 
         // Delay to allow message to finish or at least start before dialing
@@ -1229,4 +1238,175 @@ function makeAICall(projectId) {
             window.location.href = `tel:${project.clientPhone}`;
         }, 3000);
     }, 500);
+}
+// AI CHAT WIDGET LOGIC
+function toggleAIChat() {
+    const widget = document.getElementById('aiChatWidget');
+    widget.classList.toggle('active');
+
+    // Auto-scroll to bottom when opening
+    if (widget.classList.contains('active')) {
+        const msgs = document.getElementById('chatMessages');
+        msgs.scrollTop = msgs.scrollHeight;
+        document.getElementById('chatInput').focus();
+    }
+}
+
+function handleChatKey(e) {
+    if (e.key === 'Enter') {
+        sendChatMessage();
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    appendMessage('user', text);
+    input.value = '';
+
+    // Show typing status
+    const chatStatus = document.getElementById('chatStatus');
+    chatStatus.textContent = activeVoiceLang === 'ta-IN' ? 'பதிலளிக்கிறேன்...' : 'Thinking...';
+
+    try {
+        const response = await getAIResponse(text);
+        appendMessage('ai', response);
+        speak(response); // Read out the AI response
+    } catch (e) {
+        appendMessage('ai', "I'm having trouble connecting right now. Please try again.");
+    } finally {
+        chatStatus.textContent = 'Online';
+    }
+}
+
+function appendMessage(type, text) {
+    const container = document.getElementById('chatMessages');
+    const msg = document.createElement('div');
+    msg.className = `message ${type}-message`;
+    msg.textContent = text;
+    container.appendChild(msg);
+    container.scrollTop = container.scrollHeight;
+}
+
+// Knowledge Base - Extracted from current context
+function getSozhaContext() {
+    return {
+        packages: [
+            { name: "Basic", price: "₹15/sq ft", features: ["2D floor plans", "Basic material recommendations"], rules: ["No elevation", "1 revision"] },
+            { name: "Standard", price: "Interior ₹25/sq ft, Elevation ₹12/sq ft", features: ["Complete interior", "3D renderings", "Elevation design"], rules: ["2 revisions"] },
+            { name: "Luxury", price: "Interior ₹40/sq ft, Elevation ₹20/sq ft", features: ["Premium interior", "Photorealistic renders", "Unlimited revisions"], rules: ["Dedicated manager"] }
+        ],
+        recentProjects: projects.slice(0, 5).map(p => ({
+            name: p.name,
+            client: p.client,
+            status: p.status,
+            stage: p.currentStage,
+            balance: p.totalCost - p.paidAmount
+        }))
+    };
+}
+
+async function getAIResponse(query) {
+    const context = getSozhaContext();
+    const queryLower = query.toLowerCase();
+
+    // 1. Fast local check for project balance/status
+    let matchedProject = null;
+    projects.forEach(p => {
+        if (queryLower.includes(p.name.toLowerCase())) matchedProject = p;
+    });
+
+    if (matchedProject && (queryLower.includes('balance') || queryLower.includes('much') || queryLower.includes('பணம்'))) {
+        const balance = matchedProject.totalCost - matchedProject.paidAmount;
+        return activeVoiceLang === 'ta-IN' ?
+            `${matchedProject.name} திட்டத்தின் மீதமுள்ள தொகை ₹${balance.toLocaleString()} ஆகும்.` :
+            `The remaining balance for ${matchedProject.name} is ₹${balance.toLocaleString()}.`;
+    }
+
+    // 2. Call AI through Backend Relay (GAS)
+    try {
+        const scriptUrl = localStorage.getItem(scriptUrlKey);
+        const systemPrompt = `
+            You are the "Sozha Assistant", an expert AI for Sozha Architects & Maintenance.
+            Respond in ${activeVoiceLang === 'ta-IN' ? 'Tamil' : 'English'}.
+            
+            CONTEXT:
+            - Sozha Architects & Maintenance specializes in Architecture, Maintenance, and Design.
+            - PACKAGES:
+                * Basic: ₹15/sq ft (Interior). Includes 2D plans. No elevation.
+                * Standard: Interior ₹25/sq ft, Elevation ₹12/sq ft. Includes 3D renders.
+                * Luxury: Interior ₹40/sq ft, Elevation ₹20/sq ft. Includes premium renders, unlimited revisions, dedicated manager.
+            - RECENT PROJECTS: ${JSON.stringify(context.recentProjects)}
+            
+            RULES:
+            - Be professional, helpful, and concise.
+            - If asked about a project not in the list, ask them to provide the project name clearly.
+            - If asked about prices, refer to the packages.
+            - If you don't know the answer, politely say you can help with project info or design packages.
+        `;
+
+        const response = await fetch(scriptUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'askAI',
+                data: {
+                    prompt: query,
+                    systemPrompt: systemPrompt
+                }
+            })
+        });
+
+        const resData = await response.json();
+
+        if (resData.status === 'success') {
+            return resData.answer;
+        } else {
+            throw new Error(resData.message || 'AI relay failed');
+        }
+
+    } catch (e) {
+        console.error("Sozha AI Error:", e);
+
+        // Return the actual error message for debugging
+        return activeVoiceLang === 'ta-IN' ?
+            `பிழை: ${e.message}` :
+            `Error: ${e.message}`;
+    }
+}
+
+// Override existing functions to use Chat UI
+function toggleVoiceInput() {
+    const btn = document.getElementById('chatVoiceBtn');
+    if (btn.classList.contains('listening')) {
+        if (recognition) recognition.stop();
+        btn.classList.remove('listening');
+        document.getElementById('voiceWave').style.display = 'none';
+        document.querySelector('.pulse-ring-small').style.display = 'none';
+    } else {
+        startListening();
+        btn.classList.add('listening');
+        document.getElementById('voiceWave').style.display = 'flex';
+        document.querySelector('.pulse-ring-small').style.display = 'block';
+    }
+}
+
+// Modify existing recognition onresult to pipe to chat
+if (recognition) {
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('chatInput').value = transcript;
+        sendChatMessage();
+
+        // Auto-stop after one recognition for chat style
+        toggleVoiceInput();
+    };
+
+    recognition.onend = () => {
+        const btn = document.getElementById('chatVoiceBtn');
+        btn.classList.remove('listening');
+        document.getElementById('voiceWave').style.display = 'none';
+        document.querySelector('.pulse-ring-small').style.display = 'none';
+    };
 }

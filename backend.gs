@@ -9,6 +9,12 @@
  * 4. Click DEPLOY > NEW DEPLOYMENT > WEB APP > ANYONE > DEPLOY.
  */
 
+function authorizeAI() {
+  // Run this once manually in the editor to sync permissions
+  UrlFetchApp.fetch("https://google.com");
+  Logger.log("Authorization Successful!");
+}
+
 function testEmail() {
   var userEmail = "sozhaarchitect@gmail.com";
   MailApp.sendEmail(userEmail, "SOZHA Test Email", "If you received this, Sozha has permission to send emails from your account.");
@@ -203,6 +209,55 @@ function doPost(e) {
     } else {
       return ContentService.createTextOutput(JSON.stringify({status: 'error', message: 'Missing project or baseUrl'})).setMimeType(ContentService.MimeType.JSON);
     }
+  }
+
+  if (action === 'askAI') {
+    return fetchAIResponse(data.prompt, data.systemPrompt);
+  }
+}
+
+function fetchAIResponse(userPrompt, systemPrompt) {
+  var apiKey = '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';
+  var url = 'https://api.openai.com/v1/chat/completions';
+  
+  var payload = {
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    temperature: 0.7
+  };
+
+  var options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'Authorization': 'Bearer ' + apiKey },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var json = JSON.parse(response.getContentText());
+    
+    if (json.error) {
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: 'error', 
+        message: 'OpenAI API Error: ' + json.error.message 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      answer: json.choices[0].message.content.trim()
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (e) {
+    return ContentService.createTextOutput(JSON.stringify({ 
+      status: 'error', 
+      message: 'Backend Relay Error: ' + e.toString() 
+    })).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
