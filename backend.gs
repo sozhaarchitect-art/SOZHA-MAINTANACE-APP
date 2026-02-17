@@ -9,14 +9,8 @@
  * 4. Click DEPLOY > NEW DEPLOYMENT > WEB APP > ANYONE > DEPLOY.
  */
 
-function authorizeAI() {
-  // Run this once manually in the editor to sync permissions
-  UrlFetchApp.fetch("https://google.com");
-  Logger.log("Authorization Successful!");
-}
-
 function testEmail() {
-  var userEmail = "sozhaarchitect@gmail.com";
+  var userEmail = "sozhaarchitech@gmail.com";
   MailApp.sendEmail(userEmail, "SOZHA Test Email", "If you received this, Sozha has permission to send emails from your account.");
   Logger.log("Test email sent to: " + userEmail);
 }
@@ -69,7 +63,8 @@ function doGet(e) {
         start: data[i][2],
         end: data[i][3],
         description: data[i][4],
-        projectId: data[i][5]
+        projectId: data[i][5],
+        type: data[i][6] || 'Meeting'
       });
     }
     return ContentService.createTextOutput(JSON.stringify({status: 'success', data: meetings})).setMimeType(ContentService.MimeType.JSON);
@@ -180,7 +175,7 @@ function doPost(e) {
     var meeting = data;
 
     if (action === 'addMeeting') {
-      sheet.appendRow([meeting.id, meeting.title, meeting.start, meeting.end, meeting.description, meeting.projectId]);
+      sheet.appendRow([meeting.id, meeting.title, meeting.start, meeting.end, meeting.description, meeting.projectId, meeting.type]);
       return ContentService.createTextOutput(JSON.stringify({status: 'success'})).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -191,7 +186,7 @@ function doPost(e) {
         if (action === 'deleteMeeting') {
           sheet.deleteRow(i + 1);
         } else {
-          sheet.getRange(i + 1, 1, 1, 6).setValues([[meeting.id, meeting.title, meeting.start, meeting.end, meeting.description, meeting.projectId]]);
+          sheet.getRange(i + 1, 1, 1, 7).setValues([[meeting.id, meeting.title, meeting.start, meeting.end, meeting.description, meeting.projectId, meeting.type]]);
         }
         return ContentService.createTextOutput(JSON.stringify({status: 'success'})).setMimeType(ContentService.MimeType.JSON);
       }
@@ -211,55 +206,8 @@ function doPost(e) {
     }
   }
 
-  if (action === 'askAI') {
-    return fetchAIResponse(data.prompt, data.systemPrompt);
-  }
 }
 
-function fetchAIResponse(userPrompt, systemPrompt) {
-  var apiKey = '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';
-  var url = 'https://api.openai.com/v1/chat/completions';
-  
-  var payload = {
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ],
-    temperature: 0.7
-  };
-
-  var options = {
-    method: 'post',
-    contentType: 'application/json',
-    headers: { 'Authorization': 'Bearer ' + apiKey },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  };
-
-  try {
-    var response = UrlFetchApp.fetch(url, options);
-    var json = JSON.parse(response.getContentText());
-    
-    if (json.error) {
-      return ContentService.createTextOutput(JSON.stringify({ 
-        status: 'error', 
-        message: 'OpenAI API Error: ' + json.error.message 
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    return ContentService.createTextOutput(JSON.stringify({
-      status: 'success',
-      answer: json.choices[0].message.content.trim()
-    })).setMimeType(ContentService.MimeType.JSON);
-
-  } catch (e) {
-    return ContentService.createTextOutput(JSON.stringify({ 
-      status: 'error', 
-      message: 'Backend Relay Error: ' + e.toString() 
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
 
 
 
@@ -326,7 +274,7 @@ function sendPaymentReminder(project) {
       <!-- Header -->
       <div style="background-color: #141414; padding: 40px 20px; text-align: center; border-bottom: 1px solid rgba(197, 160, 89, 0.2);">
         <h1 style="color: #c5a059; margin: 0; letter-spacing: 4px; font-weight: 800; text-transform: uppercase; font-size: 28px;">SOZHA</h1>
-        <p style="color: #a0a0a0; margin: 10px 0 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Architecture • Maintenance • Design</p>
+        <p style="color: #a0a0a0; margin: 10px 0 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Design & Build • Maintenance • Custom Interiors</p>
       </div>
 
       <!-- Content -->
@@ -373,8 +321,8 @@ function sendPaymentReminder(project) {
       <!-- Footer -->
       <div style="background-color: #141414; padding: 25px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05);">
         <p style="margin: 0; font-weight: 700; color: #c5a059; font-size: 14px;">The SOZHA Team</p>
-        <p style="margin: 5px 0 0 0; color: #666; font-size: 11px;">sozhaarchitect@gmail.com</p>
-        <p style="margin: 20px 0 0 0; color: #444; font-size: 10px; text-transform: uppercase;">© ${new Date().getFullYear()} SOZHA Architecture & Maintenance</p>
+        <p style="margin: 5px 0 0 0; color: #666; font-size: 11px;">sozhaarchitech@gmail.com</p>
+        <p style="margin: 20px 0 0 0; color: #444; font-size: 10px; text-transform: uppercase;">© ${new Date().getFullYear()} SOZHA Design & Build</p>
       </div>
     </div>
   `;
@@ -382,8 +330,8 @@ function sendPaymentReminder(project) {
   try {
     MailApp.sendEmail(project.clientEmail, subject, '', {
       htmlBody: htmlBody,
-      name: 'SOZHA ARCHITECT',
-      replyTo: 'sozhaarchitect@gmail.com'
+      name: 'SOZHA DESIGN & BUILD',
+      replyTo: 'sozhaarchitech@gmail.com'
     });
     logToSheet('SUCCESS: Payment reminder sent to ' + project.clientEmail);
   } catch (e) {
@@ -406,7 +354,7 @@ function sendProjectLink(project, baseUrl, customMessage) {
       <!-- Header -->
       <div style="background-color: #141414; padding: 40px 20px; text-align: center; border-bottom: 1px solid rgba(197, 160, 89, 0.2);">
         <h1 style="color: #c5a059; margin: 0; letter-spacing: 4px; font-weight: 800; text-transform: uppercase; font-size: 28px;">SOZHA</h1>
-        <p style="color: #a0a0a0; margin: 10px 0 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Architecture • Maintenance • Design</p>
+        <p style="color: #a0a0a0; margin: 10px 0 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Design & Build • Maintenance • Custom Interiors</p>
       </div>
 
       <!-- Content -->
@@ -449,8 +397,8 @@ function sendProjectLink(project, baseUrl, customMessage) {
       <!-- Footer -->
       <div style="background-color: #141414; padding: 25px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05);">
         <p style="margin: 0; font-weight: 700; color: #c5a059; font-size: 14px;">The SOZHA Team</p>
-        <p style="margin: 5px 0 0 0; color: #666; font-size: 11px;">sozhaarchitect@gmail.com</p>
-        <p style="margin: 20px 0 0 0; color: #444; font-size: 10px; text-transform: uppercase;">© ${new Date().getFullYear()} SOZHA Architecture • India</p>
+        <p style="margin: 5px 0 0 0; color: #666; font-size: 11px;">sozhaarchitech@gmail.com</p>
+        <p style="margin: 20px 0 0 0; color: #444; font-size: 10px; text-transform: uppercase;">© ${new Date().getFullYear()} SOZHA Design & Build</p>
       </div>
     </div>
   `;
@@ -458,8 +406,8 @@ function sendProjectLink(project, baseUrl, customMessage) {
   try {
     MailApp.sendEmail(project.clientEmail, subject, '', {
       htmlBody: htmlBody,
-      name: 'SOZHA ARCHITECT',
-      replyTo: 'sozhaarchitect@gmail.com'
+      name: 'SOZHA DESIGN & BUILD',
+      replyTo: 'sozhaarchitech@gmail.com'
     });
     logToSheet('SUCCESS: Client update email sent to ' + project.clientEmail);
     Logger.log('SUCCESS: Client update email sent to ' + project.clientEmail);
@@ -515,11 +463,11 @@ function setup() {
     meetingSheet = ss.insertSheet('Meetings');
   }
   
-  var meetingHeaders = ['ID', 'Title', 'Start Time', 'End Time', 'Description', 'Project ID'];
+  var meetingHeaders = ['ID', 'Title', 'Start Time', 'End Time', 'Description', 'Project ID', 'Type'];
   if (meetingSheet.getLastRow() === 0) {
     meetingSheet.appendRow(meetingHeaders);
   } else {
-    meetingSheet.getRange(1, 1, 1, 6).setValues([meetingHeaders]);
+    meetingSheet.getRange(1, 1, 1, 7).setValues([meetingHeaders]);
   }
 
   // Setup Log Sheet

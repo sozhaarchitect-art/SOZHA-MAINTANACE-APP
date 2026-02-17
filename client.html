@@ -126,11 +126,6 @@
                 <div id="cStatusBadge" class="status-badge" style="display: inline-block; margin-bottom: 2rem;">Active
                 </div>
                 <div style="float: right; margin-top: -10px; display: flex; gap: 0.5rem;">
-                    <button class="secondary" onclick="startAICall()"
-                        style="padding: 0.5rem 1rem; font-size: 0.8rem; border-color: #9c27b0; color: #9c27b0;">
-                        <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
-                        AI Assistant
-                    </button>
                     <a href="brochure.html" class="secondary"
                         style="text-decoration: none; padding: 0.5rem 1rem; font-size: 0.8rem;" target="_blank">
                         <span class="iconify" data-icon="material-symbols:book-2-outline"></span>
@@ -237,38 +232,10 @@
         </div>
 
         <div style="text-align: center; margin-top: 2rem;">
-            <p style="font-size: 0.8rem; color: var(--text-secondary);">© 2026 SOZHA ARCHITECTS</p>
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">© 2026 SOZHA DESIGN & BUILD</p>
         </div>
     </div>
 
-    <!-- AI Voice Modal -->
-    <div id="voiceModal" class="modal">
-        <div class="card voice-card">
-            <div class="voice-header" style="margin-bottom: 2rem;">
-                <div class="ai-avatar">
-                    <div class="pulse-ring"></div>
-                    <span class="iconify" data-icon="material-symbols:robot-2-outline"></span>
-                </div>
-                <h3>Project Monitoring & Balance Assistant</h3>
-                <p id="voiceStatus">Ready to help</p>
-            </div>
-
-            <div class="language-selection">
-                <button class="lang-btn" onclick="setVoiceLang('en-US')">Talk in English</button>
-                <button class="lang-btn" onclick="setVoiceLang('ta-IN')">தமிழில் பேச</button>
-            </div>
-
-            <div class="voice-controls">
-                <button class="lang-btn" onclick="startListening()"
-                    style="background: var(--accent-color); color: black;">
-                    Tap to Speak
-                </button>
-                <button class="end-call-btn" onclick="endAICall()">
-                    <span class="iconify" data-icon="material-symbols:call-end"></span>
-                </button>
-            </div>
-        </div>
-    </div>
 
     <script>
         // Simple client-side fetching logic
@@ -281,7 +248,7 @@
                 return;
             }
             try {
-                const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbwpEv1QUxfIDr1CfSanhONqZ5NJzDT4n4-Hj7N5tSNhsuJTIYxt9L6sTJdysbwIPoya/exec';
+                const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbzmV9KbmyooGQ0s4Fo1MavWMs5cdL1543ZkO6QsexcvAcluiNtmP5L6u797_CHb__dY/exec';
                 const scriptUrl = localStorage.getItem('sozha_script_url') || defaultScriptUrl;
 
                 const response = await fetch(`${scriptUrl}?action=getProject&id=${projectId}`);
@@ -438,164 +405,6 @@
 
         if (projectId) fetchProject();
 
-        // AI VOICE ASSISTANT LOGIC
-        let activeVoiceLang = 'en-US';
-        let currentProjectData = null;
-        let recognition = null;
-
-        // Initialize Speech Recognition
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
-            recognition.onstart = () => {
-                document.getElementById('voiceStatus').textContent = activeVoiceLang === 'ta-IN' ? 'கேட்டுக் கொண்டிருக்கிறேன்...' : 'Listening...';
-                document.querySelector('.pulse-ring').style.display = 'block';
-                document.querySelector('.pulse-ring').style.background = 'rgba(76, 175, 80, 0.4)'; // Green for listening
-            };
-
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error', event.error);
-                document.getElementById('voiceStatus').textContent = 'Microphone error: ' + event.error;
-                document.querySelector('.pulse-ring').style.display = 'none';
-            };
-
-            recognition.onend = () => {
-                document.querySelector('.pulse-ring').style.display = 'none';
-                if (document.getElementById('voiceModal').style.display === 'flex') {
-                    document.getElementById('voiceStatus').textContent = activeVoiceLang === 'ta-IN' ? 'கேக்கத் தயார்' : 'Ready to listen';
-                }
-            };
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript.toLowerCase();
-                console.log('Recognized text:', transcript);
-                handleVoiceQuery(transcript);
-            };
-        }
-
-        function startListening() {
-            if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-                alert('Microphone access requires a secure connection (HTTPS). Please ensure you are using HTTPS.');
-                return;
-            }
-
-            if (recognition) {
-                try {
-                    recognition.lang = activeVoiceLang;
-                    recognition.start();
-                } catch (e) {
-                    console.warn('Recognition already started');
-                }
-            } else {
-                alert('Speech recognition is not supported in this browser. Please use Chrome.');
-            }
-        }
-
-        function handleVoiceQuery(text) {
-            const balanceKeywordsEn = ['balance', 'amount', 'due', 'how much', 'rupees', 'money', 'pending'];
-            const balanceKeywordsTa = ['மீதமுள்ள', 'தொகை', 'பணம்', 'விலை', 'எவ்வளவு', 'ரூபாய்', 'பாக்கி'];
-
-            const isBalanceQuery = balanceKeywordsEn.some(k => text.includes(k)) ||
-                balanceKeywordsTa.some(k => text.includes(k));
-
-            if (isBalanceQuery && currentProjectData) {
-                readClientReport(currentProjectData, activeVoiceLang);
-            } else {
-                if (activeVoiceLang === 'ta-IN') {
-                    speak("மன்னிக்கவும், எனக்கு புரியவில்லை. நீங்கள் மீண்டும் ஒருமுறை கூற முடியுமா?", 'ta-IN');
-                } else {
-                    speak("I'm sorry, I didn't catch that. Could you please repeat? You can ask about your balance or project status.", 'en-US');
-                }
-            }
-        }
-
-        function startAICall() {
-            const modal = document.getElementById('voiceModal');
-            modal.style.display = 'flex';
-            document.getElementById('voiceStatus').textContent = 'Waiting for language selection...';
-        }
-
-        function endAICall() {
-            window.speechSynthesis.cancel();
-            document.getElementById('voiceModal').style.display = 'none';
-        }
-
-        function setVoiceLang(lang) {
-            activeVoiceLang = lang;
-
-            // UI Feedback
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.onclick.toString().includes(lang));
-            });
-
-            const status = document.getElementById('voiceStatus');
-            if (lang === 'en-US') {
-                status.textContent = 'Listening...';
-            } else {
-                status.textContent = 'கேட்டுக் கொண்டிருக்கிறேன்...';
-            }
-
-            // Start listening immediately
-            startListening();
-        }
-
-        function speak(text, lang) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang || activeVoiceLang;
-            utterance.rate = 0.9;
-            utterance.pitch = 1;
-
-            utterance.onstart = () => {
-                document.getElementById('voiceStatus').textContent = 'Speaking...';
-                document.querySelector('.pulse-ring').style.display = 'block';
-            };
-
-            utterance.onend = () => {
-                document.getElementById('voiceStatus').textContent = lang === 'ta-IN' ? 'கேக்கத் தயார்' : 'Ready to listen';
-                document.querySelector('.pulse-ring').style.display = 'none';
-
-                // Automatically start listening after AI finishes speaking
-                setTimeout(() => {
-                    if (document.getElementById('voiceModal').style.display === 'flex') {
-                        startListening();
-                    }
-                }, 500);
-            };
-
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function readClientReport(proj, lang) {
-            const balance = (proj.totalCost || 0) - (proj.paidAmount || 0);
-            const stage = proj.currentStage || 'starting';
-
-            if (lang === 'ta-IN') {
-                const msg = `திட்டம் '${proj.name}' தற்போது ${stage} நிலையில் உள்ளது.
-                            மொத்த திட்ட மதிப்பு: ரூபாய் ${(proj.totalCost || 0).toLocaleString()}.
-                            இதுவரை செலுத்தப்பட்ட தொகை: ரூபாய் ${(proj.paidAmount || 0).toLocaleString()}.
-                            மீதமுள்ள பாக்கி தொகை: ரூபாய் ${balance.toLocaleString()}.
-                            நன்றி.`;
-                speak(msg, 'ta-IN');
-            } else {
-                const msg = `Project '${proj.name}' is currently in the ${stage} stage.
-                            Total project value is ${(proj.totalCost || 0).toLocaleString()} rupees.
-                            Amount paid till date is ${(proj.paidAmount || 0).toLocaleString()} rupees.
-                            Remaining project balance is ${balance.toLocaleString()} rupees.
-                            Thank you.`;
-                speak(msg, 'en-US');
-            }
-        }
-
-        // Update displayProject to store current data
-        const originalDisplayProject = displayProject;
-        displayProject = function (proj) {
-            currentProjectData = proj;
-            originalDisplayProject(proj);
-        };
     </script>
 </body>
 

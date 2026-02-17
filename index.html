@@ -28,7 +28,7 @@
         <div class="blob blob-4"></div>
     </div>
     <div id="splash-screen">
-        <img src="logo.png" alt="Sozha Architecture Logo" id="splash-logo">
+        <img src="logo.png" alt="Sozha Design & Build Logo" id="splash-logo">
     </div>
     <div id="meetingAlert" class="meeting-alert" style="display: none;">
         <div class="alert-content">
@@ -57,6 +57,10 @@
                     <div class="search-container" id="searchContainer">
                         <input type="text" id="projectSearch" placeholder="Search..."
                             oninput="handleSearch(this.value)">
+                        <button class="secondary icon-btn" id="voiceSearchBtn" onclick="startVoiceSearch()"
+                            title="Voice Search">
+                            <span class="iconify" data-icon="material-symbols:mic"></span>
+                        </button>
                         <button class="secondary icon-btn"
                             onclick="handleSearch(document.getElementById('projectSearch').value)" title="Search">
                             <span class="iconify" data-icon="material-symbols:search"></span>
@@ -77,10 +81,6 @@
                 </div>
 
                 <div class="main-actions-group">
-                    <button class="secondary ai-btn" onclick="toggleAIChat()" title="AI Voice Assistant">
-                        <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
-                        AI Assistant
-                    </button>
                     <button id="addProjectBtn" class="primary-btn">
                         <span class="iconify" data-icon="material-symbols:add"></span>
                         Add New Project
@@ -193,6 +193,10 @@
                 <div class="tab" data-type="Scheduling" onclick="switchTab('Scheduling')">Scheduling</div>
                 <div class="tab" data-type="Steam UE 5 Files" onclick="switchTab('Steam UE 5 Files')">Steam UE 5 Files
                 </div>
+                <div class="tab" data-type="Voice" onclick="startVoiceSearch()"
+                    style="border: 1px dashed var(--accent-color);">
+                    <span class="iconify" data-icon="material-symbols:mic"></span> Voice Search
+                </div>
             </div>
 
 
@@ -301,9 +305,18 @@
             <h3 id="meetingFormTitle">Schedule Meeting</h3>
             <form id="meetingForm">
                 <input type="hidden" id="meetingId">
-                <div class="form-group">
-                    <label>Meeting Title</label>
-                    <input type="text" id="meetingTitle" required placeholder="e.g. Design Review - Villa A">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Meeting Title</label>
+                        <input type="text" id="meetingTitle" required placeholder="e.g. Design Review">
+                    </div>
+                    <div class="form-group">
+                        <label>Event Type</label>
+                        <select id="meetingType">
+                            <option value="Meeting">Meeting</option>
+                            <option value="Reminder">Reminder</option>
+                        </select>
+                    </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
@@ -434,76 +447,7 @@
 
 
 
-    <!-- AI Voice Modal -->
-    <div id="voiceModal" class="modal">
-        <div class="card voice-card">
-            <div class="voice-header" style="margin-bottom: 2rem;">
-                <div class="ai-avatar">
-                    <div class="pulse-ring"></div>
-                    <span class="iconify" data-icon="material-symbols:robot-2-outline"></span>
-                </div>
-                <h3>Project Monitoring & Balance Assistant</h3>
-                <p id="voiceStatus">Ready to help</p>
-            </div>
 
-            <div class="language-selection">
-                <button class="lang-btn" onclick="setVoiceLang('en-US')">Talk in English</button>
-                <button class="lang-btn" onclick="setVoiceLang('ta-IN')">தமிழில் பேச</button>
-            </div>
-
-            <div class="voice-controls">
-                <button class="lang-btn" onclick="startListening()"
-                    style="background: var(--accent-color); color: black;">
-                    Tap to Speak
-                </button>
-                <button class="end-call-btn" onclick="endAICall()">
-                    <span class="iconify" data-icon="material-symbols:call-end"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI Chat Widget -->
-    <div id="aiChatWidget" class="ai-chat-widget">
-        <div class="chat-header">
-            <div class="ai-header-info">
-                <div class="ai-avatar-small">
-                    <span class="iconify" data-icon="material-symbols:robot-2-outline"></span>
-                    <div class="pulse-ring-small"></div>
-                </div>
-                <div>
-                    <h4>Sozha Assistant</h4>
-                    <p id="chatStatus">Online</p>
-                </div>
-            </div>
-            <div class="chat-header-actions">
-                <button class="icon-btn" onclick="toggleAIChat()" title="Minimize">
-                    <span class="iconify" data-icon="material-symbols:keyboard-arrow-down"></span>
-                </button>
-            </div>
-        </div>
-
-        <div id="chatMessages" class="chat-messages">
-            <div class="message ai-message">
-                Hello! I'm your Sozha Assistant. How can I help you today?
-            </div>
-        </div>
-
-        <div class="chat-input-area">
-            <div class="voice-wave" id="voiceWave">
-                <span></span><span></span><span></span><span></span><span></span>
-            </div>
-            <div class="input-wrapper">
-                <input type="text" id="chatInput" placeholder="Ask about Sozha..." onkeypress="handleChatKey(event)">
-                <button class="voice-btn" id="chatVoiceBtn" onclick="toggleVoiceInput()" title="Voice Input">
-                    <span class="iconify" data-icon="material-symbols:mic-outline"></span>
-                </button>
-                <button class="send-btn" onclick="sendChatMessage()" title="Send">
-                    <span class="iconify" data-icon="material-symbols:send-outline"></span>
-                </button>
-            </div>
-        </div>
-    </div>
 
     <script src="app.js"></script>
 </body>

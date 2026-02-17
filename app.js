@@ -6,7 +6,7 @@ let meetings = []; // New global for meetings
 let activeType = 'Design';
 let searchQuery = '';
 const scriptUrlKey = 'sozha_script_url';
-const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbwTvAOOp-U_GV7U1xULsRcFI9ghXN5TOYHaKPe71kN6_vYZThB8Vpp2SSieTt_a9kVM/exec';
+const defaultScriptUrl = 'https://script.google.com/macros/s/AKfycbzmV9KbmyooGQ0s4Fo1MavWMs5cdL1543ZkO6QsexcvAcluiNtmP5L6u797_CHb__dY/exec';
 let statusChart = null;
 let calendar = null; // New global for FullCalendar instance
 
@@ -353,12 +353,6 @@ function renderProjects() {
 
             <div class="card-actions">
                 <div class="action-buttons" style="display: flex; gap: 0.4rem; justify-content: center; width: 100%;">
-                    <button class="secondary icon-btn read-voice-btn" title="Read Status" onclick="readProjectStatus('${p.id}')">
-                        <span class="iconify" data-icon="material-symbols:record-voice-over-outline"></span>
-                    </button>
-                    <button class="secondary icon-btn" title="AI Call" style="color: #4CAF50;" onclick="makeAICall('${p.id}')">
-                        <span class="iconify" data-icon="material-symbols:call-outline"></span>
-                    </button>
                     <button class="secondary icon-btn" title="Edit" onclick="editProject('${p.id}')">
                         <span class="iconify" data-icon="material-symbols:edit-outline"></span>
                     </button>
@@ -608,7 +602,11 @@ function initCalendar() {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
-        events: meetings,
+        events: meetings.map(m => ({
+            ...m,
+            backgroundColor: m.type === 'Reminder' ? '#9c27b0' : '',
+            borderColor: m.type === 'Reminder' ? '#7b1fa2' : ''
+        })),
         dateClick: function (info) {
             openMeetingModal(null, info.dateStr);
         },
@@ -633,11 +631,13 @@ function openMeetingModal(event = null, dateStr = null) {
     if (event) {
         document.getElementById('meetingId').value = event.id;
         document.getElementById('meetingTitle').value = event.title;
+        document.getElementById('meetingType').value = event.extendedProps.type || 'Meeting';
         document.getElementById('meetingStart').value = formatDateTime(event.start);
         document.getElementById('meetingEnd').value = formatDateTime(event.end);
         document.getElementById('meetingProject').value = event.extendedProps.projectId || '';
         document.getElementById('meetingDescription').value = event.extendedProps.description || '';
     } else if (dateStr) {
+        document.getElementById('meetingType').value = 'Meeting';
         // Default to 1 hour meeting at 10 AM on selected date
         document.getElementById('meetingStart').value = `${dateStr}T10:00`;
         document.getElementById('meetingEnd').value = `${dateStr}T11:00`;
@@ -662,6 +662,7 @@ async function handleMeetingSubmit(e) {
     const meeting = {
         id: id || Date.now().toString(),
         title: document.getElementById('meetingTitle').value,
+        type: document.getElementById('meetingType').value,
         start: document.getElementById('meetingStart').value,
         end: document.getElementById('meetingEnd').value,
         projectId: document.getElementById('meetingProject').value,
@@ -681,7 +682,13 @@ async function handleMeetingSubmit(e) {
     closeMeetingModal();
     if (calendar) {
         calendar.getEvents().forEach(e => e.remove());
-        meetings.forEach(m => calendar.addEvent(m));
+        meetings.forEach(m => {
+            calendar.addEvent({
+                ...m,
+                backgroundColor: m.type === 'Reminder' ? '#9c27b0' : '',
+                borderColor: m.type === 'Reminder' ? '#7b1fa2' : ''
+            });
+        });
     }
 }
 
@@ -747,7 +754,8 @@ function checkMeetingsToday() {
     if (todayMeetings.length > 0 && alertEl && infoEl) {
         const nextMeeting = todayMeetings[0];
         const time = new Date(nextMeeting.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        infoEl.textContent = `${nextMeeting.title} at ${time}${todayMeetings.length > 1 ? ` (+${todayMeetings.length - 1} more)` : ''}`;
+        const typeLabel = nextMeeting.type === 'Reminder' ? '⏰ Reminder' : '📅 Meeting';
+        infoEl.textContent = `${typeLabel}: ${nextMeeting.title} at ${time}${todayMeetings.length > 1 ? ` (+${todayMeetings.length - 1} more)` : ''}`;
         alertEl.style.display = 'flex';
     } else if (alertEl) {
         alertEl.style.display = 'none';
@@ -1019,394 +1027,48 @@ function formatFeetInches(decimalFeet) {
     return (decimalFeet < 0 ? '-' : '') + feet + "' " + inches + fractionStr;
 }
 
-// AI VOICE ASSISTANT LOGIC
-let activeVoiceLang = 'en-US';
-let recognition = null;
+// VOICE SEARCH LOGIC (Lightweight Browser-Native)
+function startVoiceSearch() {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert('Voice search is not supported in this browser. Please use Chrome.');
+        return;
+    }
 
-// Initialize Speech Recognition
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = 'en-US';
     recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    const searchInput = document.getElementById('projectSearch');
+    const voiceBtn = document.getElementById('voiceSearchBtn');
+    const voiceIcon = voiceBtn ? voiceBtn.querySelector('.iconify') : null;
 
     recognition.onstart = () => {
-        document.getElementById('voiceStatus').textContent = activeVoiceLang === 'ta-IN' ? 'கேட்டுக் கொண்டிருக்கிறேன்...' : 'Listening...';
-        const ring = document.querySelector('.pulse-ring');
-        if (ring) {
-            ring.style.display = 'block';
-            ring.style.background = 'rgba(76, 175, 80, 0.4)';
+        if (voiceIcon) voiceIcon.setAttribute('data-icon', 'material-symbols:mic-outline');
+        if (voiceBtn) voiceBtn.style.color = 'var(--accent-color)';
+        showNotification('Listening...');
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (searchInput) {
+            searchInput.value = transcript;
+            handleSearch(transcript);
+            showNotification(`Searching for: "${transcript}"`);
         }
     };
 
     recognition.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
-        document.getElementById('voiceStatus').textContent = 'Microphone error: ' + event.error;
+        console.error('Voice search error:', event.error);
+        showNotification('Voice search failed: ' + event.error, true);
     };
 
     recognition.onend = () => {
-        const ring = document.querySelector('.pulse-ring');
-        if (ring) ring.style.display = 'none';
-        if (document.getElementById('voiceModal').style.display === 'flex') {
-            document.getElementById('voiceStatus').textContent = activeVoiceLang === 'ta-IN' ? 'கேக்கத் தயார்' : 'Ready to listen';
-        }
+        if (voiceIcon) voiceIcon.setAttribute('data-icon', 'material-symbols:mic');
+        if (voiceBtn) voiceBtn.style.color = '';
     };
 
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.toLowerCase();
-        console.log('Recognized text:', transcript);
-        handleVoiceQuery(transcript);
-    };
-}
-
-function startListening() {
-    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-        alert('Microphone access requires a secure connection (HTTPS). Please ensure you are using HTTPS.');
-        return;
-    }
-
-    if (recognition) {
-        try {
-            recognition.lang = activeVoiceLang;
-            recognition.start();
-        } catch (e) {
-            console.warn('Recognition already started');
-        }
-    } else {
-        alert('Speech recognition is not supported in this browser. Please use Chrome.');
-    }
-}
-
-function handleVoiceQuery(text) {
-    const balanceKeywordsEn = ['balance', 'amount', 'due', 'how much', 'rupees', 'money', 'pending', 'cost'];
-    const balanceKeywordsTa = ['மீதமுள்ள', 'தொகை', 'பணம்', 'விலை', 'எவ்வளவு', 'ரூபாய்', 'பாக்கி'];
-
-    const isBalanceQuery = balanceKeywordsEn.some(k => text.includes(k)) ||
-        balanceKeywordsTa.some(k => text.includes(k));
-
-    // Try to find project name in text
-    let targetProject = null;
-    projects.forEach(p => {
-        const nameClean = p.name.toLowerCase();
-        if (text.includes(nameClean)) {
-            targetProject = p;
-        }
-    });
-
-    if (isBalanceQuery) {
-        if (targetProject) {
-            readDetailedReport(targetProject, activeVoiceLang);
-        } else {
-            // If no project mentioned but query is about balance, maybe ask which one?
-            // Or if only one project exists, use that.
-            if (projects.length === 1) {
-                readDetailedReport(projects[0], activeVoiceLang);
-            } else {
-                const msg = activeVoiceLang === 'ta-IN' ?
-                    "எந்த திட்டத்தின் நிலையை நீங்கள் தெரிந்து கொள்ள விரும்புகிறீர்கள்?" :
-                    "Which project's balance would you like to know?";
-                speak(msg);
-            }
-        }
-    } else {
-        const msg = activeVoiceLang === 'ta-IN' ?
-            "மன்னிக்கவும், எனக்கு புரியவில்லை. திட்டத்தின் பெயர் மற்றும் மீதமுள்ள தொகையை கேட்கலாம்." :
-            "I can help with project balance and stage. Please mention the project name.";
-        speak(msg);
-    }
-}
-
-function readDetailedReport(proj, lang) {
-    const balance = proj.totalCost - proj.paidAmount;
-    const stage = proj.currentStage || 'starting';
-
-    if (lang === 'ta-IN') {
-        const msg = `${proj.name} திட்டம் தற்போது ${stage} நிலையில் உள்ளது. 
-                    மீதமுள்ள தொகை ரூபாய் ${balance.toLocaleString()} ஆகும்.`;
-        speak(msg, 'ta-IN');
-    } else {
-        const msg = `${proj.name} project is in ${stage} stage. 
-                    Remaining balance is ${balance.toLocaleString()} rupees.`;
-        speak(msg, 'en-US');
-    }
-}
-
-function startAICall() {
-    const modal = document.getElementById('voiceModal');
-    modal.style.display = 'flex';
-    document.getElementById('voiceStatus').textContent = 'Waiting for language selection...';
-}
-
-function endAICall() {
-    window.speechSynthesis.cancel();
-    document.getElementById('voiceModal').style.display = 'none';
-}
-
-function setVoiceLang(lang) {
-    activeVoiceLang = lang;
-
-    // UI Feedback
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        const clickAttr = btn.getAttribute('onclick');
-        if (clickAttr && clickAttr.includes(lang)) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-
-    const status = document.getElementById('voiceStatus');
-    if (lang === 'en-US') {
-        status.textContent = 'Listening...';
-    } else {
-        status.textContent = 'கேட்டுக் கொண்டிருக்கிறேன்...';
-    }
-
-    // Start listening immediately
-    startListening();
-}
-
-function speak(text, lang) {
-    window.speechSynthesis.cancel(); // Stop current speech
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang || activeVoiceLang;
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-
-    utterance.onstart = () => {
-        document.getElementById('voiceStatus').textContent = 'Speaking...';
-        const ring = document.querySelector('.pulse-ring');
-        if (ring) ring.style.display = 'block';
-    };
-
-    utterance.onend = () => {
-        document.getElementById('voiceStatus').textContent = lang === 'ta-IN' ? 'கேக்கத் தயார்' : 'Ready to listen';
-        const ring = document.querySelector('.pulse-ring');
-        if (ring) ring.style.display = 'none';
-
-        // Auto-listen again
-        setTimeout(() => {
-            if (document.getElementById('voiceModal').style.display === 'flex') {
-                startListening();
-            }
-        }, 500);
-    };
-
-    window.speechSynthesis.speak(utterance);
-}
-
-function readProjectStatus(projectId) {
-    const project = projects.find(p => String(p.id) === String(projectId));
-    if (!project) return;
-
-    toggleAIChat();
-    const widget = document.getElementById('aiChatWidget');
-    if (!widget.classList.contains('active')) widget.classList.add('active');
-
-    // Brief delay to ensure modal is visible
-    setTimeout(() => {
-        const msg = activeVoiceLang === 'ta-IN' ?
-            `${project.name} குறித்து தகவல் கூறுகிறேன்.` :
-            `Let me tell you about ${project.name}.`;
-        appendMessage('ai', msg);
-        readDetailedReport(project, activeVoiceLang);
-    }, 500);
-}
-
-function makeAICall(projectId) {
-    const project = projects.find(p => String(p.id) === String(projectId));
-    if (!project || !project.clientPhone) {
-        showCustomAlert('Missing Phone Number', 'No phone number found for this client!');
-        return;
-    }
-
-    toggleAIChat();
-    const widget = document.getElementById('aiChatWidget');
-    if (!widget.classList.contains('active')) widget.classList.add('active');
-
-    setTimeout(() => {
-        const msg = activeVoiceLang === 'ta-IN' ?
-            `${project.name} குறித்து ${project.client}-ஐ அழைக்கத் தயார் செய்கிறேன்.` :
-            `Preparing to call ${project.client} regarding project ${project.name}.`;
-
-        appendMessage('ai', msg);
-        speak(msg);
-
-        // Delay to allow message to finish or at least start before dialing
-        setTimeout(() => {
-            window.location.href = `tel:${project.clientPhone}`;
-        }, 3000);
-    }, 500);
-}
-// AI CHAT WIDGET LOGIC
-function toggleAIChat() {
-    const widget = document.getElementById('aiChatWidget');
-    widget.classList.toggle('active');
-
-    // Auto-scroll to bottom when opening
-    if (widget.classList.contains('active')) {
-        const msgs = document.getElementById('chatMessages');
-        msgs.scrollTop = msgs.scrollHeight;
-        document.getElementById('chatInput').focus();
-    }
-}
-
-function handleChatKey(e) {
-    if (e.key === 'Enter') {
-        sendChatMessage();
-    }
-}
-
-async function sendChatMessage() {
-    const input = document.getElementById('chatInput');
-    const text = input.value.trim();
-    if (!text) return;
-
-    appendMessage('user', text);
-    input.value = '';
-
-    // Show typing status
-    const chatStatus = document.getElementById('chatStatus');
-    chatStatus.textContent = activeVoiceLang === 'ta-IN' ? 'பதிலளிக்கிறேன்...' : 'Thinking...';
-
-    try {
-        const response = await getAIResponse(text);
-        appendMessage('ai', response);
-        speak(response); // Read out the AI response
-    } catch (e) {
-        appendMessage('ai', "I'm having trouble connecting right now. Please try again.");
-    } finally {
-        chatStatus.textContent = 'Online';
-    }
-}
-
-function appendMessage(type, text) {
-    const container = document.getElementById('chatMessages');
-    const msg = document.createElement('div');
-    msg.className = `message ${type}-message`;
-    msg.textContent = text;
-    container.appendChild(msg);
-    container.scrollTop = container.scrollHeight;
-}
-
-// Knowledge Base - Extracted from current context
-function getSozhaContext() {
-    return {
-        packages: [
-            { name: "Basic", price: "₹15/sq ft", features: ["2D floor plans", "Basic material recommendations"], rules: ["No elevation", "1 revision"] },
-            { name: "Standard", price: "Interior ₹25/sq ft, Elevation ₹12/sq ft", features: ["Complete interior", "3D renderings", "Elevation design"], rules: ["2 revisions"] },
-            { name: "Luxury", price: "Interior ₹40/sq ft, Elevation ₹20/sq ft", features: ["Premium interior", "Photorealistic renders", "Unlimited revisions"], rules: ["Dedicated manager"] }
-        ],
-        recentProjects: projects.slice(0, 5).map(p => ({
-            name: p.name,
-            client: p.client,
-            status: p.status,
-            stage: p.currentStage,
-            balance: p.totalCost - p.paidAmount
-        }))
-    };
-}
-
-async function getAIResponse(query) {
-    const context = getSozhaContext();
-    const queryLower = query.toLowerCase();
-
-    // 1. Fast local check for project balance/status
-    let matchedProject = null;
-    projects.forEach(p => {
-        if (queryLower.includes(p.name.toLowerCase())) matchedProject = p;
-    });
-
-    if (matchedProject && (queryLower.includes('balance') || queryLower.includes('much') || queryLower.includes('பணம்'))) {
-        const balance = matchedProject.totalCost - matchedProject.paidAmount;
-        return activeVoiceLang === 'ta-IN' ?
-            `${matchedProject.name} திட்டத்தின் மீதமுள்ள தொகை ₹${balance.toLocaleString()} ஆகும்.` :
-            `The remaining balance for ${matchedProject.name} is ₹${balance.toLocaleString()}.`;
-    }
-
-    // 2. Call AI through Backend Relay (GAS)
-    try {
-        const scriptUrl = localStorage.getItem(scriptUrlKey);
-        const systemPrompt = `
-            You are the "Sozha Assistant", an expert AI for Sozha Architects & Maintenance.
-            Respond in ${activeVoiceLang === 'ta-IN' ? 'Tamil' : 'English'}.
-            
-            CONTEXT:
-            - Sozha Architects & Maintenance specializes in Architecture, Maintenance, and Design.
-            - PACKAGES:
-                * Basic: ₹15/sq ft (Interior). Includes 2D plans. No elevation.
-                * Standard: Interior ₹25/sq ft, Elevation ₹12/sq ft. Includes 3D renders.
-                * Luxury: Interior ₹40/sq ft, Elevation ₹20/sq ft. Includes premium renders, unlimited revisions, dedicated manager.
-            - RECENT PROJECTS: ${JSON.stringify(context.recentProjects)}
-            
-            RULES:
-            - Be professional, helpful, and concise.
-            - If asked about a project not in the list, ask them to provide the project name clearly.
-            - If asked about prices, refer to the packages.
-            - If you don't know the answer, politely say you can help with project info or design packages.
-        `;
-
-        const response = await fetch(scriptUrl, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'askAI',
-                data: {
-                    prompt: query,
-                    systemPrompt: systemPrompt
-                }
-            })
-        });
-
-        const resData = await response.json();
-
-        if (resData.status === 'success') {
-            return resData.answer;
-        } else {
-            throw new Error(resData.message || 'AI relay failed');
-        }
-
-    } catch (e) {
-        console.error("Sozha AI Error:", e);
-
-        // Return the actual error message for debugging
-        return activeVoiceLang === 'ta-IN' ?
-            `பிழை: ${e.message}` :
-            `Error: ${e.message}`;
-    }
-}
-
-// Override existing functions to use Chat UI
-function toggleVoiceInput() {
-    const btn = document.getElementById('chatVoiceBtn');
-    if (btn.classList.contains('listening')) {
-        if (recognition) recognition.stop();
-        btn.classList.remove('listening');
-        document.getElementById('voiceWave').style.display = 'none';
-        document.querySelector('.pulse-ring-small').style.display = 'none';
-    } else {
-        startListening();
-        btn.classList.add('listening');
-        document.getElementById('voiceWave').style.display = 'flex';
-        document.querySelector('.pulse-ring-small').style.display = 'block';
-    }
-}
-
-// Modify existing recognition onresult to pipe to chat
-if (recognition) {
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        document.getElementById('chatInput').value = transcript;
-        sendChatMessage();
-
-        // Auto-stop after one recognition for chat style
-        toggleVoiceInput();
-    };
-
-    recognition.onend = () => {
-        const btn = document.getElementById('chatVoiceBtn');
-        btn.classList.remove('listening');
-        document.getElementById('voiceWave').style.display = 'none';
-        document.querySelector('.pulse-ring-small').style.display = 'none';
-    };
+    recognition.start();
 }
